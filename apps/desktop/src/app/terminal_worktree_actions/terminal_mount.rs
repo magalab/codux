@@ -132,7 +132,7 @@ impl CoduxApp {
         );
         slot.pane = Some(pane.clone());
         if let Some(terminal_id) = terminal_id.as_deref() {
-            self.register_terminal_pane(Some(terminal_id), &pane, cx);
+            self.register_terminal_pane(Some(terminal_id), Some(slot_index), &pane, cx);
         }
         pending.push((pty_config, attach));
         self.spawn_attach_pending_terminals(None, pending, cx);
@@ -290,23 +290,23 @@ impl CoduxApp {
 
     pub(in crate::app) fn register_terminal_panes(&mut self, cx: &mut Context<Self>) {
         let registrations = self.terminal_pane_registrations();
-        for (terminal_id, pane) in registrations {
-            self.register_terminal_pane(Some(&terminal_id), &pane, cx);
+        for (terminal_id, pane_index, pane) in registrations {
+            self.register_terminal_pane(Some(&terminal_id), Some(pane_index), &pane, cx);
         }
     }
 
     pub(in crate::app) fn register_terminal_panes_without_observers(&mut self) {
         let registrations = self.terminal_pane_registrations();
-        for (terminal_id, pane) in registrations {
+        for (terminal_id, _pane_index, pane) in registrations {
             self.terminal_pane_registry.insert(terminal_id, pane);
         }
     }
 
-    fn terminal_pane_registrations(&self) -> Vec<(String, TerminalPane)> {
+    fn terminal_pane_registrations(&self) -> Vec<(String, usize, TerminalPane)> {
         let mut registrations = Vec::new();
         for tab in &self.terminals {
             let tab_terminal_id = tab.terminal_id.clone();
-            for slot in &tab.panes {
+            for (pane_index, slot) in tab.panes.iter().enumerate() {
                 let Some(pane) = slot.pane.as_ref() else {
                     continue;
                 };
@@ -318,7 +318,7 @@ impl CoduxApp {
                 else {
                     continue;
                 };
-                registrations.push((terminal_id, pane.clone()));
+                registrations.push((terminal_id, pane_index, pane.clone()));
             }
         }
         registrations
@@ -334,6 +334,7 @@ impl CoduxApp {
     pub(in crate::app) fn register_terminal_pane(
         &mut self,
         terminal_id: Option<&str>,
+        pane_index: Option<usize>,
         pane: &TerminalPane,
         cx: &mut Context<Self>,
     ) {
@@ -344,10 +345,12 @@ impl CoduxApp {
         let app_for_link = app.clone();
         let app_for_title = app.clone();
         let app_for_search = app.clone();
+        let app_for_exit = app.clone();
         let terminal_id = terminal_id.to_string();
         let observer_terminal_id = terminal_id.clone();
         let title_terminal_id = terminal_id.clone();
         let search_terminal_id = terminal_id.clone();
+        let exit_terminal_id = terminal_id.clone();
         pane.view.update(cx, |terminal, _| {
             terminal.set_focus_observer(move |_window, cx| {
                 let terminal_id = observer_terminal_id.clone();
@@ -379,6 +382,39 @@ impl CoduxApp {
                     app.open_terminal_web_link(url, cx);
                 });
             });
+            // Shell-exit hook: when the PTY session reports a terminal exit,
+            // close the corresponding desktop pane. Without this, only the X
+            // button drives layout cleanup, so a shell that ran `exit` on a
+            // non-unique right-side pane left the slot frozen in
+            // `self.terminals[…].panes` until the user clicked close.
+            let exit_app = app_for_exit;
+            let exit_terminal_id = exit_terminal_id;
+            terminal.set_exit_observer(move |cx| {
+                let terminal_id = exit_terminal_id.clone();
+                // Clone the weak entity so the deferred closure can move
+                // it (the outer `move` already captured `exit_app`).
+                let exit_app = exit_app.clone();
+                // Exit fires from inside the view's model-observe lease; defer
+                // to a fresh app update to avoid re-entering the view.
+                cx.defer(move |cx| {
+                    let _ = exit_app.update(cx, |app, cx| {
+                        app.handle_terminal_shell_exit(&terminal_id, pane_index, cx);
+                    });
+                });
+            });
+        });
+        // Recover from the narrow race window where the PTY exited BEFORE
+        // we registered the observer. `spawn_with_pty_config` (used by
+        // collapse / float) attaches the PTY synchronously before
+        // `register_terminal_pane` is reached, so a shell that exits
+        // immediately (e.g. `bash -c exit`) would otherwise land its
+        // exit event ahead of the observer install — the rising-edge
+        // helper already marks `last_observed_exited = true` on the
+        // first observe tick, then we install the observer, and the
+        // cleanup never gets a chance to run. Fires the observer once
+        // if the model is already in the exited state at registration.
+        pane.view.update(cx, |view, cx| {
+            view.ensure_exit_observer_fired(cx);
         });
         // Seed from the view's cached title: registration may follow output
         // that already carried an OSC title.

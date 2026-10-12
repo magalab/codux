@@ -148,7 +148,7 @@ impl CoduxApp {
                                 pane_count > 1,
                                 cx,
                                 move |app, _event, window, cx| {
-                                    app.close_terminal_pane(index, window, cx)
+                                    app.close_terminal_pane(index, Some(window), cx)
                                 },
                             )),
                     )

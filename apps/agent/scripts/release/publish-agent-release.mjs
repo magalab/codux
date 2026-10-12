@@ -4,12 +4,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { resolveRepository } from "../../../desktop/scripts/release/repository.mjs";
 
 const root = process.cwd();
 const dryRun = process.argv.includes("--dry-run");
 const version = requiredEnv("RELEASE_VERSION");
 const tagName = process.env.RELEASE_TAG || `v${version}`;
-const repo = process.env.GITHUB_REPOSITORY || "duxweb/codux";
+const repo = resolveRepository();
 const artifactsDir = process.env.RELEASE_ARTIFACTS_DIR || path.join(root, "release-artifacts");
 
 const assets = collectAgentAssets(artifactsDir);

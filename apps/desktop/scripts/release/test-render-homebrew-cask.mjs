@@ -21,7 +21,12 @@ try {
       "intel-sha",
       caskPath,
     ],
-    { cwd: root, stdio: "pipe", encoding: "utf8" },
+    {
+      cwd: root,
+      stdio: "pipe",
+      encoding: "utf8",
+      env: { ...process.env, RELEASE_REPOSITORY: "example/codux" },
+    },
   );
 
   if (result.status !== 0) {
@@ -34,6 +39,7 @@ try {
   assert.match(cask, /on_arm do/);
   assert.match(cask, /sha256 "arm-sha"/);
   assert.match(cask, /codux-macos-aarch64\.dmg/);
+  assert.match(cask, /https:\/\/github\.com\/example\/codux\/releases/);
   assert.doesNotMatch(cask, /codux-#\{version\}-macos-aarch64\.dmg/);
   assert.match(cask, /on_intel do/);
   assert.match(cask, /sha256 "intel-sha"/);

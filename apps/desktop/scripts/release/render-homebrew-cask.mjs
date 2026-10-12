@@ -3,9 +3,11 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { resolveRepository } from "./repository.mjs";
 
 const [, , versionArg, armSha256, intelSha256, outputPath] = process.argv;
 const version = (versionArg || "").replace(/^v/, "");
+const repository = resolveRepository();
 
 if (!version || !armSha256 || !intelSha256 || !outputPath) {
   throw new Error("usage: render-homebrew-cask.mjs <version> <arm-sha256> <intel-sha256> <output-path>");
@@ -19,24 +21,24 @@ fs.writeFileSync(
 
   on_arm do
     sha256 "${armSha256}"
-    url "https://github.com/duxweb/codux/releases/download/v#{version}/codux-macos-aarch64.dmg"
+    url "https://github.com/${repository}/releases/download/v#{version}/codux-macos-aarch64.dmg"
   end
 
   on_intel do
     sha256 "${intelSha256}"
-    url "https://github.com/duxweb/codux/releases/download/v#{version}/codux-macos-x86_64.dmg"
+    url "https://github.com/${repository}/releases/download/v#{version}/codux-macos-x86_64.dmg"
   end
 
   name "Codux"
   desc "Native terminal workspace for AI coding tools"
-  homepage "https://github.com/duxweb/codux"
+  homepage "https://github.com/${repository}"
 
   livecheck do
     url :url
     strategy :github_latest
   end
 
-  depends_on macos: ">= :sonoma"
+  depends_on macos: :sonoma
 
   app "Codux.app"
 

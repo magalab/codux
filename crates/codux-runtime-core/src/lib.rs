@@ -5,6 +5,7 @@ pub mod git;
 pub mod host;
 pub mod path;
 pub mod project;
+pub mod release;
 pub mod runtime_stdio;
 pub mod runtime_target;
 pub mod subscription;

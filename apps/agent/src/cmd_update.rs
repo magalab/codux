@@ -9,13 +9,6 @@ use std::time::Duration;
 
 use crate::{cmd_service, cmd_start, runstate};
 
-const LATEST_RELEASE_API: &str = "https://api.github.com/repos/duxweb/codux/releases/latest";
-const RELEASES_API: &str = "https://api.github.com/repos/duxweb/codux/releases";
-const STABLE_MANIFEST_URL: &str =
-    "https://raw.githubusercontent.com/duxweb/codux/main/updates/stable/latest.json";
-const BETA_MANIFEST_URL: &str =
-    "https://raw.githubusercontent.com/duxweb/codux/main/updates/beta/latest.json";
-const REPO_DOWNLOAD_BASE: &str = "https://github.com/duxweb/codux/releases/download";
 const USER_AGENT: &str = "codux-agent-updater";
 
 #[derive(Deserialize)]
@@ -94,17 +87,24 @@ pub fn run(current: &str, beta: bool) -> Result<(), String> {
 
 fn fetch_release(client: &reqwest::blocking::Client, beta: bool) -> Result<Release, String> {
     if !beta {
-        return fetch_manifest_release(client, STABLE_MANIFEST_URL, Channel::Stable).or_else(
-            |error| {
+        return fetch_manifest_release(
+            client,
+            &codux_runtime_core::release::github_raw_url("/updates/stable/latest.json"),
+            Channel::Stable,
+        )
+        .or_else(|error| {
                 eprintln!(
                     "warning: stable manifest lookup failed: {error}; falling back to GitHub releases API"
                 );
                 fetch_latest_release(client)
-            },
-        );
+            });
     }
 
-    match fetch_manifest_release(client, BETA_MANIFEST_URL, Channel::Beta) {
+    match fetch_manifest_release(
+        client,
+        &codux_runtime_core::release::github_raw_url("/updates/beta/latest.json"),
+        Channel::Beta,
+    ) {
         Ok(release) => return Ok(release),
         Err(error) => eprintln!(
             "warning: beta manifest lookup failed: {error}; falling back to GitHub releases API"
@@ -112,7 +112,7 @@ fn fetch_release(client: &reqwest::blocking::Client, beta: bool) -> Result<Relea
     }
 
     let releases = client
-        .get(RELEASES_API)
+        .get(codux_runtime_core::release::github_release_url("/releases"))
         .send()
         .map_err(|error| format!("failed to reach GitHub: {error}"))?
         .error_for_status()
@@ -124,7 +124,9 @@ fn fetch_release(client: &reqwest::blocking::Client, beta: bool) -> Result<Relea
 
 fn fetch_latest_release(client: &reqwest::blocking::Client) -> Result<Release, String> {
     client
-        .get(LATEST_RELEASE_API)
+        .get(codux_runtime_core::release::github_release_url(
+            "/releases/latest",
+        ))
         .send()
         .map_err(|error| format!("failed to reach GitHub: {error}"))?
         .error_for_status()
@@ -199,7 +201,9 @@ fn agent_asset_names(version: &str, os: &str, arch: &str) -> Vec<String> {
 }
 
 fn release_asset_url(tag_name: &str, asset_name: &str) -> String {
-    format!("{REPO_DOWNLOAD_BASE}/{tag_name}/{asset_name}")
+    codux_runtime_core::release::github_release_url(&format!(
+        "/releases/download/{tag_name}/{asset_name}"
+    ))
 }
 
 fn select_beta_release(releases: Vec<Release>) -> Result<Release, String> {
@@ -320,9 +324,9 @@ mod tests {
         assert!(release.assets.iter().any(|asset| asset.name == expected));
         assert!(release.assets.iter().any(|asset| {
             asset.browser_download_url
-                == format!(
-                    "https://github.com/duxweb/codux/releases/download/v2.0.0-beta.10/{expected}"
-                )
+                == codux_runtime_core::release::github_release_url(&format!(
+                    "/releases/download/v2.0.0-beta.10/{expected}"
+                ))
         }));
     }
 

@@ -16,6 +16,7 @@ const result = spawnSync("node", ["apps/desktop/scripts/release/prepare-release.
   env: {
     ...process.env,
     RELEASE_NOTES_PATH: notesPath,
+    RELEASE_REPOSITORY: "duxweb/codux",
   },
   encoding: "utf8",
 });
@@ -70,6 +71,7 @@ const rcChannelResult = spawnSync(
     env: {
       ...process.env,
       RELEASE_NOTES_PATH: path.join(tempDir, "rc-release-notes.md"),
+      RELEASE_REPOSITORY: "duxweb/codux",
     },
     encoding: "utf8",
   },
@@ -86,6 +88,7 @@ const missingNotesResult = spawnSync(
     env: {
       ...process.env,
       RELEASE_NOTES_PATH: path.join(tempDir, "missing-release-notes.md"),
+      RELEASE_REPOSITORY: "duxweb/codux",
     },
     encoding: "utf8",
   },

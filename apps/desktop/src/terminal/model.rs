@@ -199,6 +199,14 @@ impl TerminalModel {
         }
     }
 
+    /// True once a `TerminalUiEvent::Exit` has been observed for this session
+    /// and not yet cleared by a subsequent `Reconnected`. Used by the view's
+    /// exit observer to drive pane-level cleanup on shell exit without keeping
+    /// layout state in sync via the app alone.
+    pub fn exited(&self) -> bool {
+        self.exited
+    }
+
     fn receive_output(&mut self, bytes: Vec<u8>, cx: &mut Context<Self>) {
         if self.output_flush_pending {
             self.pending_output_bytes.extend(bytes);

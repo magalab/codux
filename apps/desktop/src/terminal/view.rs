@@ -2,6 +2,11 @@ type TerminalFocusObserver = Arc<dyn Fn(&mut Window, &mut Context<TerminalView>)
 type TerminalTitleObserver = Arc<dyn Fn(Option<String>, &mut Context<TerminalView>)>;
 type TerminalSearchObserver = Arc<dyn Fn(bool, &mut Context<TerminalView>)>;
 type TerminalLinkOpener = Arc<dyn Fn(String, &mut Window, &mut Context<TerminalView>)>;
+// Fired on the rising edge of `model.exited()` (PTY-driven shell exit). The
+// observer runs while the view is inside a model-observe update lease, so it
+// must NOT read the view back — only hand the event up to the app, which is
+// responsible for closing the pane (see `handle_terminal_shell_exit`).
+type TerminalExitObserver = Arc<dyn Fn(&mut Context<TerminalView>)>;
 
 pub struct TerminalView {
     model: Entity<TerminalModel>,
@@ -26,6 +31,9 @@ pub struct TerminalView {
     focus_observer: Option<TerminalFocusObserver>,
     title_observer: Option<TerminalTitleObserver>,
     search_observer: Option<TerminalSearchObserver>,
+    exit_observer: Option<TerminalExitObserver>,
+    last_observed_exited: bool,
+    exit_observer_notified: bool,
     osc_title: Option<String>,
     search_open: bool,
     search_input: Option<Entity<InputState>>,
@@ -212,6 +220,21 @@ impl TerminalView {
                     observer(title, cx);
                 }
             }
+            // Rising-edge detect `model.exited()`. A `Reconnected` event clears
+            // the flag back to false, so the next exit re-fires the observer;
+            // an open + close + reopen lifecycle otherwise goes 0 → 1 → 1 and
+            // only the leading 0 → 1 transition should drive pane cleanup.
+            let exited_now = model.read(cx).exited();
+            if exited_now && !view.last_observed_exited {
+                view.last_observed_exited = true;
+                if let Some(observer) = view.exit_observer.clone() {
+                    view.exit_observer_notified = true;
+                    observer(cx);
+                }
+            } else if !exited_now {
+                view.last_observed_exited = false;
+                view.exit_observer_notified = false;
+            }
             cx.notify();
         });
         let observe_blink_manager = cx.observe(&blink_manager, |_, _, cx| cx.notify());
@@ -239,6 +262,9 @@ impl TerminalView {
             focus_observer: None,
             title_observer: None,
             search_observer: None,
+            exit_observer: None,
+            last_observed_exited: false,
+            exit_observer_notified: false,
             osc_title: None,
             search_open: false,
             search_input: None,
@@ -350,6 +376,44 @@ impl TerminalView {
         F: Fn(bool, &mut Context<TerminalView>) + 'static,
     {
         self.search_observer = Some(Arc::new(observer));
+    }
+
+    /// Install an observer that fires the first time the underlying PTY
+    /// session reports `TerminalEvent::Exit` for this view. The closure runs
+    /// while the view is inside a model-observe update lease; it must not
+    /// read the view back. The desktop uses this to keep the split-pane
+    /// layout in sync when a user types `exit` in a non-last pane — without
+    /// it the dead pane stays in `self.terminals[…].panes` until the user
+    /// clicks the X button. A subsequent `Reconnected` re-arms the rising
+    /// edge so a future exit will fire again.
+    pub fn set_exit_observer<F>(&mut self, observer: F)
+    where
+        F: Fn(&mut Context<TerminalView>) + 'static,
+    {
+        self.exit_observer = Some(Arc::new(observer));
+    }
+
+    /// Run the exit observer immediately if the underlying PTY has already
+    /// exited by the time of registration. Closes the
+    /// "PTY-exited-before-observer-installed" race: when the PTY is attached
+    /// synchronously ahead of `register_terminal_pane` (the
+    /// `spawn_with_pty_config` path used by collapse and float), a shell
+    /// that exits immediately (e.g. `bash -c exit`) would otherwise land its
+    /// exit event ahead of the observer install — `_observe_model` would
+    /// mark `last_observed_exited = true` on the first observe tick, then
+    /// we install the observer below, and the cleanup would never get a
+    /// chance to run.
+    pub fn ensure_exit_observer_fired(&mut self, cx: &mut Context<Self>) {
+        if self.model.read(cx).exited() && !self.exit_observer_notified
+            && let Some(observer) = self.exit_observer.clone()
+        {
+            self.last_observed_exited = true;
+            self.exit_observer_notified = true;
+            // The observer defers via `cx.defer` itself, so we don't need
+            // to defer again here — by the time the deferred closure in
+            // the observer runs, the observer is already installed.
+            observer(cx);
+        }
     }
 
     pub fn search_is_open(&self) -> bool {

@@ -664,7 +664,7 @@ fn terminal_pane(
                         )),
                         pane_count > 1,
                         cx,
-                        move |app, window, cx| app.close_terminal_pane(index, window, cx),
+                        move |app, window, cx| app.close_terminal_pane(index, Some(window), cx),
                     )),
             )
         })

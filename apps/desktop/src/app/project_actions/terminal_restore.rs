@@ -165,7 +165,7 @@ impl CoduxApp {
                 continue;
             };
             let _ = tab_plan;
-            for slot in tab.panes.iter_mut() {
+            for (slot_index, slot) in tab.panes.iter_mut().enumerate() {
                 if slot.pane.is_some() {
                     continue;
                 }
@@ -195,14 +195,14 @@ impl CoduxApp {
                     }),
                 );
                 if let Some(terminal_id) = slot.terminal_id.clone() {
-                    registrations.push((terminal_id, pane.clone()));
+                    registrations.push((terminal_id, slot_index, pane.clone()));
                 }
                 slot.pane = Some(pane);
                 pending.push((pty_config, attach));
             }
         }
-        for (terminal_id, pane) in registrations {
-            self.register_terminal_pane(Some(&terminal_id), &pane, cx);
+        for (terminal_id, pane_index, pane) in registrations {
+            self.register_terminal_pane(Some(&terminal_id), Some(pane_index), &pane, cx);
         }
         pending
     }

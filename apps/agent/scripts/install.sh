@@ -12,6 +12,7 @@
 #   --beta              newest beta-tagged build             (CODUX_CHANNEL=beta)
 #   --stable            newest stable build  [default]              (CODUX_CHANNEL=stable)
 #   --version <x.y.z>   install an exact version                    (CODUX_VERSION=x.y.z)
+#   --repo <owner/repo> GitHub repository to download from          (CODUX_REPOSITORY=owner/repo)
 #   --dir <path>        install / locate dir                        (CODUX_INSTALL_DIR=path)
 #   --mirror <prefix>   prepend a download mirror (slow GitHub?)    (CODUX_DOWNLOAD_BASE=prefix)
 #   --setup             run `codux config` + `codux install` after  (CODUX_SETUP=1)
@@ -24,7 +25,7 @@
 #   --help              show this help
 set -eu
 
-REPO="duxweb/codux"
+REPO="${CODUX_REPOSITORY:-duxweb/codux}"
 BIN_NAME="codux"
 MODE="install"
 CHANNEL="${CODUX_CHANNEL:-stable}"
@@ -58,6 +59,7 @@ Options (pass after `sh -s --`, or as env vars):
   --beta              newest beta-tagged build             (CODUX_CHANNEL=beta)
   --stable            newest stable build  [default]              (CODUX_CHANNEL=stable)
   --version <x.y.z>   install an exact version                    (CODUX_VERSION=x.y.z)
+  --repo <owner/repo> GitHub repository to download from          (CODUX_REPOSITORY=owner/repo)
   --dir <path>        install / locate dir                        (CODUX_INSTALL_DIR=path)
   --mirror <prefix>   prepend a download mirror (slow GitHub?)    (CODUX_DOWNLOAD_BASE=prefix)
   --setup             run `codux config` + `codux install` after  (CODUX_SETUP=1)
@@ -299,6 +301,8 @@ while [ $# -gt 0 ]; do
     --stable)      CHANNEL="stable" ;;
     --version)     VERSION="${2:?--version needs a value}"; shift ;;
     --version=*)   VERSION="${1#*=}" ;;
+    --repo)        REPO="${2:?--repo needs a value}"; shift ;;
+    --repo=*)      REPO="${1#*=}" ;;
     --dir)         INSTALL_DIR="${2:?--dir needs a value}"; shift ;;
     --dir=*)       INSTALL_DIR="${1#*=}" ;;
     --mirror)      MIRROR="${2:?--mirror needs a value}"; shift ;;
