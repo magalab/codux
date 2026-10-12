@@ -230,6 +230,7 @@ jobs:
         run: node apps/desktop/scripts/release/publish-github-release.mjs
 
       - name: Publish Homebrew tap
+        if: needs.metadata.outputs.channel == 'stable'
         shell: bash
         env:
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
