@@ -3,6 +3,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { resolveRepository } from "./repository.mjs";
 
 const root = process.cwd();
 const dryRun = process.argv.includes("--dry-run");
@@ -187,6 +188,6 @@ function buildDownloadGuide() {
 }
 
 function releaseAssetUrl(assetName) {
-  const repo = process.env.GITHUB_REPOSITORY || "duxweb/codux";
+  const repo = resolveRepository();
   return `https://github.com/${repo}/releases/latest/download/${encodeURIComponent(assetName)}`;
 }

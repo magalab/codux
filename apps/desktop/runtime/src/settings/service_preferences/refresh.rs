@@ -97,24 +97,16 @@ fn sync_update_endpoint_for_channel(update: &mut serde_json::Map<String, Value>,
     if endpoint.is_empty() || is_managed_update_endpoint(endpoint) {
         update.insert(
             "endpoint".to_string(),
-            Value::String(update_endpoint_for_channel(channel).to_string()),
+            Value::String(update_endpoint_for_channel(channel)),
         );
     }
 }
 
-fn update_endpoint_for_channel(channel: &str) -> &'static str {
-    match channel {
-        "beta" => "https://raw.githubusercontent.com/duxweb/codux/main/updates/beta/latest.json",
-        _ => "https://raw.githubusercontent.com/duxweb/codux/main/updates/stable/latest.json",
-    }
+fn update_endpoint_for_channel(channel: &str) -> String {
+    let channel = if channel == "beta" { "beta" } else { "stable" };
+    codux_runtime_core::release::github_raw_url(&format!("/updates/{channel}/latest.json"))
 }
 
 fn is_managed_update_endpoint(endpoint: &str) -> bool {
-    matches!(
-        endpoint,
-        "https://github.com/duxweb/codux/releases/latest/download/latest.json"
-            | "https://github.com/duxweb/codux/releases/download/beta/latest.json"
-            | "https://raw.githubusercontent.com/duxweb/codux/main/updates/stable/latest.json"
-            | "https://raw.githubusercontent.com/duxweb/codux/main/updates/beta/latest.json"
-    )
+    codux_runtime_core::release::is_managed_update_endpoint(endpoint)
 }

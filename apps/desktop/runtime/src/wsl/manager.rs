@@ -359,6 +359,7 @@ fn parse_sidecar_version_output(output: &str) -> Option<WslRuntimeInfo> {
 
 #[cfg(any(target_os = "windows", test))]
 fn sidecar_install_script(version: &str) -> String {
+    let repository = codux_runtime_core::release::REPOSITORY;
     format!(
         r#"set -eu
 arch="$(uname -m)"
@@ -372,7 +373,7 @@ dir="$(dirname "$target")"
 tmp="$target.tmp"
 trap 'rm -f "$tmp"' EXIT
 mkdir -p "$dir"
-url="https://github.com/duxweb/codux/releases/download/v{version}/$asset"
+url="https://github.com/{repository}/releases/download/v{version}/$asset"
 if command -v curl >/dev/null 2>&1; then
   curl -fL --progress-bar "$url" -o "$tmp"
 elif command -v wget >/dev/null 2>&1; then

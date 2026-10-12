@@ -190,21 +190,12 @@ pub(super) fn release_channel_for_version(version: &str) -> &'static str {
 }
 
 pub(crate) fn update_endpoint_for_channel(channel: &str) -> String {
-    match channel {
-        "beta" => "https://raw.githubusercontent.com/duxweb/codux/main/updates/beta/latest.json",
-        _ => "https://raw.githubusercontent.com/duxweb/codux/main/updates/stable/latest.json",
-    }
-    .to_string()
+    let channel = if channel == "beta" { "beta" } else { "stable" };
+    codux_runtime_core::release::github_raw_url(&format!("/updates/{channel}/latest.json"))
 }
 
 pub(super) fn is_managed_update_endpoint(endpoint: &str) -> bool {
-    matches!(
-        endpoint,
-        "https://github.com/duxweb/codux/releases/latest/download/latest.json"
-            | "https://github.com/duxweb/codux/releases/download/beta/latest.json"
-            | "https://raw.githubusercontent.com/duxweb/codux/main/updates/stable/latest.json"
-            | "https://raw.githubusercontent.com/duxweb/codux/main/updates/beta/latest.json"
-    )
+    codux_runtime_core::release::is_managed_update_endpoint(endpoint)
 }
 
 #[cfg(test)]

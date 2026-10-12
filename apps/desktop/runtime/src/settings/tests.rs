@@ -568,17 +568,22 @@ mod tests {
     #[test]
     fn update_channel_keeps_managed_endpoint_in_sync() {
         let support_dir = temp_dir("settings-update-channel");
+        let stable_endpoint = codux_runtime_core::release::github_release_url(
+            "/releases/latest/download/latest.json",
+        );
         fs::write(
             support_dir.join("settings.json"),
-            r#"
-            {
-              "update": {
+            format!(
+                r#"
+            {{
+              "update": {{
                 "enabled": true,
                 "channel": "stable",
-                "endpoint": "https://github.com/duxweb/codux/releases/latest/download/latest.json"
-              }
-            }
-            "#,
+                "endpoint": "{stable_endpoint}"
+              }}
+            }}
+            "#
+            ),
         )
         .expect("settings");
 
@@ -589,9 +594,8 @@ mod tests {
         assert_eq!(summary.update_channel, "beta");
         crate::config::flush_all_config_writes();
         let updated = fs::read_to_string(support_dir.join("settings.json")).expect("updated");
-        assert!(updated.contains(
-            "\"endpoint\": \"https://raw.githubusercontent.com/duxweb/codux/main/updates/beta/latest.json\""
-        ));
+        let beta_endpoint = codux_runtime_core::release::github_raw_url("/updates/beta/latest.json");
+        assert!(updated.contains(&format!("\"endpoint\": \"{beta_endpoint}\"")));
 
         let summary = service
             .set_update_channel("stable")
@@ -599,9 +603,9 @@ mod tests {
         assert_eq!(summary.update_channel, "stable");
         crate::config::flush_all_config_writes();
         let updated = fs::read_to_string(support_dir.join("settings.json")).expect("updated");
-        assert!(updated.contains(
-            "\"endpoint\": \"https://raw.githubusercontent.com/duxweb/codux/main/updates/stable/latest.json\""
-        ));
+        let stable_manifest_endpoint =
+            codux_runtime_core::release::github_raw_url("/updates/stable/latest.json");
+        assert!(updated.contains(&format!("\"endpoint\": \"{stable_manifest_endpoint}\"")));
 
         fs::remove_dir_all(support_dir).ok();
     }
@@ -609,17 +613,21 @@ mod tests {
     #[test]
     fn update_channel_keeps_raw_endpoint_in_sync() {
         let support_dir = temp_dir("settings-update-channel-raw");
+        let stable_endpoint =
+            codux_runtime_core::release::github_raw_url("/updates/stable/latest.json");
         fs::write(
             support_dir.join("settings.json"),
-            r#"
-            {
-              "update": {
+            format!(
+                r#"
+            {{
+              "update": {{
                 "enabled": true,
                 "channel": "stable",
-                "endpoint": "https://raw.githubusercontent.com/duxweb/codux/main/updates/stable/latest.json"
-              }
-            }
-            "#,
+                "endpoint": "{stable_endpoint}"
+              }}
+            }}
+            "#
+            ),
         )
         .expect("settings");
 
@@ -630,9 +638,8 @@ mod tests {
         assert_eq!(summary.update_channel, "beta");
         crate::config::flush_all_config_writes();
         let updated = fs::read_to_string(support_dir.join("settings.json")).expect("updated");
-        assert!(updated.contains(
-            "\"endpoint\": \"https://raw.githubusercontent.com/duxweb/codux/main/updates/beta/latest.json\""
-        ));
+        let beta_endpoint = codux_runtime_core::release::github_raw_url("/updates/beta/latest.json");
+        assert!(updated.contains(&format!("\"endpoint\": \"{beta_endpoint}\"")));
 
         fs::remove_dir_all(support_dir).ok();
     }

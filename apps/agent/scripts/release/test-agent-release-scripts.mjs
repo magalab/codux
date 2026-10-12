@@ -45,6 +45,7 @@ try {
         RELEASE_VERSION: version,
         RELEASE_TAG: `v${version}`,
         RELEASE_ARTIFACTS_DIR: path.join(tempDir, "release-artifacts"),
+        RELEASE_REPOSITORY: "example/codux",
       },
       encoding: "utf8",
     },

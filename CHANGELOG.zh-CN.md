@@ -7,6 +7,8 @@
 ### 修复
 
 - 未配置可用的记忆提取 Provider 时暂停自动消费记忆队列，避免反复失败和 UI 刷新，同时保留待处理任务并在 Provider 可用后继续处理。
+- 发布、更新、WSL Runtime、Agent 安装脚本和 Homebrew 发布现在支持为 fork 及组织发行版配置仓库地址。
+- 更新 Homebrew Cask 生成器，使用不再弃用的 macOS 依赖写法。
 
 ## [2.0.3] - 2026-07-21
 
