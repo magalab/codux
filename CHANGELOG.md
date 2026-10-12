@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.0.4-beta.1] - 2026-10-12
+
 ### Fixed
 
 - Paused automatic memory queue processing when no eligible extraction provider is configured, preventing repeated failures and UI refresh churn while preserving queued work until a provider becomes available.
