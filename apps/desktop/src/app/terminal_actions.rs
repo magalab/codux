@@ -22,7 +22,7 @@ impl CoduxApp {
             self.pending_terminal_close = None;
             match target {
                 TerminalCloseTarget::Split { pane_index } => {
-                    self.close_terminal_pane(pane_index, window, cx);
+                    self.close_terminal_pane(pane_index, Some(window), cx);
                 }
             }
             return;
@@ -222,7 +222,15 @@ impl CoduxApp {
                 pty_config.clone(),
                 self.terminal_config_from_settings(),
             );
-            self.register_terminal_pane(Some(&pane_terminal_id), &terminal_pane, cx);
+            // Capture the slot index BEFORE pushing (the push follows the
+            // register call). The exit observer uses this as a fast path.
+            let pane_index = self.main_terminal().map(|tab| tab.panes.len()).unwrap_or(0);
+            self.register_terminal_pane(
+                Some(&pane_terminal_id),
+                Some(pane_index),
+                &terminal_pane,
+                cx,
+            );
             if let Some(tab) = self.main_terminal_mut() {
                 tab.panes.push(TerminalPaneSlot {
                     title: pane.title.clone(),
@@ -397,7 +405,12 @@ impl CoduxApp {
             pty_config.clone(),
             self.terminal_config_from_settings(),
         );
-        self.register_terminal_pane(pane_terminal_id.as_deref(), &terminal, cx);
+        self.register_terminal_pane(
+            pane_terminal_id.as_deref(),
+            Some(insert_index),
+            &terminal,
+            cx,
+        );
         let active_runtime_id = pane_terminal_id.clone();
         terminal.view.read(cx).focus_handle().focus(window, cx);
         if let Some(tab) = self.main_terminal_mut() {
@@ -501,7 +514,12 @@ impl CoduxApp {
                 self.terminal_config_from_settings(),
             ) {
                 Ok(pane) => {
-                    self.register_terminal_pane(slot.terminal_id.as_deref(), &pane, cx);
+                    self.register_terminal_pane(
+                        slot.terminal_id.as_deref(),
+                        Some(pane_index),
+                        &pane,
+                        cx,
+                    );
                     slot.pane = Some(pane);
                 }
                 Err(error) => {
@@ -632,7 +650,12 @@ impl CoduxApp {
                 self.terminal_config_from_settings(),
             ) {
                 Ok(pane) => {
-                    self.register_terminal_pane(slot.terminal_id.as_deref(), &pane, cx);
+                    self.register_terminal_pane(
+                        slot.terminal_id.as_deref(),
+                        Some(pane_index),
+                        &pane,
+                        cx,
+                    );
                     slot.pane = Some(pane);
                 }
                 Err(error) => {
@@ -773,7 +796,7 @@ impl CoduxApp {
     pub(in crate::app) fn close_terminal_pane(
         &mut self,
         pane_index: usize,
-        window: &mut Window,
+        window: Option<&mut Window>,
         cx: &mut Context<Self>,
     ) {
         let Some(tab_index) = (!self.terminals.is_empty()).then_some(0) else {
@@ -836,7 +859,9 @@ impl CoduxApp {
             .or_else(|| self.terminals[tab_index].panes.first())
             .and_then(|slot| slot.terminal_id.clone());
         self.select_active_terminal_runtime_id(next_active_terminal_id.as_deref());
-        self.focus_active_terminal(window, cx);
+        if let Some(window) = window {
+            self.focus_active_terminal(window, cx);
+        }
         self.sync_terminal_state_after_layout_change(cx);
         match kill_result {
             Ok(Some(cleanup)) if cleanup.lifecycle_removed => {
@@ -854,7 +879,7 @@ impl CoduxApp {
     fn reset_terminal_pane(
         &mut self,
         pane_index: usize,
-        window: &mut Window,
+        window: Option<&mut Window>,
         cx: &mut Context<Self>,
     ) {
         let Some(tab_index) = (!self.terminals.is_empty()).then_some(0) else {
@@ -883,7 +908,9 @@ impl CoduxApp {
         self.select_active_terminal_runtime_id(Some(&terminal_id));
         let mount_result = self.ensure_active_terminal_mounted(cx);
         self.refresh_terminal_slot_snapshots();
-        self.focus_active_terminal(window, cx);
+        if let Some(window) = window {
+            self.focus_active_terminal(window, cx);
+        }
         self.sync_terminal_state_after_layout_change(cx);
         match kill_result {
             Ok(cleanup) => {
@@ -901,6 +928,85 @@ impl CoduxApp {
                 self.status_message = format!("terminal reset; PTY cleanup failed: {error}");
             }
         }
+        self.invalidate_terminal_workspace(cx);
+    }
+
+    /// Close a pane whose underlying PTY just hit `TerminalEvent::Exit` (e.g.
+    /// the user typed `exit`). Without this hook, only the X button calls
+    /// `close_terminal_pane`, so a shell exit on a non-unique right-side
+    /// pane left the slot in the layout tree forever while the runtime PTY
+    /// was gone (visually "frozen" until the user manually clicked the
+    /// close button). `pane_index` is the index the pane had at registration
+    /// time — by the time the exit fires, splits may have been added/removed,
+    /// so we re-resolve the current slot by `terminal_id`.
+    ///
+    /// `window` is left as `None` from the auto-close path because the exit
+    /// observer runs inside a model-observe update lease and the view does
+    /// not have a typed `Window`; the user just typed `exit` in this pane,
+    /// so focus restoration is not critical — they will click the next pane
+    /// they care about.
+    pub(in crate::app) fn handle_terminal_shell_exit(
+        &mut self,
+        terminal_id: &str,
+        pane_index: Option<usize>,
+        cx: &mut Context<Self>,
+    ) {
+        let Some(tab_index) = (!self.terminals.is_empty()).then_some(0) else {
+            return;
+        };
+        let tab = &self.terminals[tab_index];
+        // Prefer the registered index when it still points at a slot with
+        // the same terminal_id; otherwise fall back to a fresh lookup.
+        let resolved_index = if let Some(idx) = pane_index {
+            if idx < tab.panes.len()
+                && Self::terminal_slot_terminal_id(tab, idx, &tab.panes[idx]).as_deref()
+                    == Some(terminal_id)
+            {
+                Some(idx)
+            } else {
+                tab.panes.iter().enumerate().position(|(index, slot)| {
+                    Self::terminal_slot_terminal_id(tab, index, slot).as_deref()
+                        == Some(terminal_id)
+                })
+            }
+        } else {
+            tab.panes.iter().enumerate().position(|(index, slot)| {
+                Self::terminal_slot_terminal_id(tab, index, slot).as_deref() == Some(terminal_id)
+            })
+        };
+        if let Some(idx) = resolved_index {
+            self.close_terminal_pane(idx, None, cx);
+            return;
+        }
+
+        // Collapsed panes are not part of the split tree, but they still own
+        // a live view and can receive the same PTY exit event. Remove the
+        // stale slot here so restoring it later cannot resurrect a dead pane.
+        let Some(collapsed_index) = self
+            .collapsed_terminal_panes
+            .iter()
+            .position(|slot| slot.terminal_id.as_deref() == Some(terminal_id))
+        else {
+            // A floating pane is owned by its child window rather than by the
+            // visible/collapsed layout. The window will be restored or closed
+            // separately, but the runtime binding must still be released.
+            let _ = self.kill_terminal_session_if_present(terminal_id);
+            return;
+        };
+        self.collapsed_terminal_panes.remove(collapsed_index);
+        let still_referenced = self.terminals.iter().any(|tab| {
+            tab.panes.iter().enumerate().any(|(index, slot)| {
+                Self::terminal_slot_terminal_id(tab, index, slot).as_deref() == Some(terminal_id)
+            })
+        }) || self
+            .collapsed_terminal_panes
+            .iter()
+            .any(|slot| slot.terminal_id.as_deref() == Some(terminal_id));
+        if !still_referenced {
+            let _ = self.kill_terminal_session_if_present(terminal_id);
+        }
+        self.sync_terminal_state_after_layout_change(cx);
+        self.invalidate_task_column(cx);
         self.invalidate_terminal_workspace(cx);
     }
 
@@ -1104,7 +1210,7 @@ impl CoduxApp {
             pty_config.clone(),
             self.terminal_config_from_settings(),
         );
-        self.register_terminal_pane(pane_terminal_id.as_deref(), &terminal, cx);
+        self.register_terminal_pane(pane_terminal_id.as_deref(), Some(pane_index), &terminal, cx);
         let active_runtime_id = pane_terminal_id.clone();
         let send_result = terminal.send_text(&terminal_command_text(&command));
         if let Some(window) = window.as_deref_mut() {
