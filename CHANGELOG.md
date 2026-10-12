@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.0.4-beta.2] - 2026-10-12
+
+### Fixed
+
+- Switched the fork release channel to its own Tauri updater signing key so GitHub Actions can publish signed automatic updates.
+
 ## [2.0.4-beta.1] - 2026-10-12
 
 ### Fixed
