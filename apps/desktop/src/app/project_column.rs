@@ -280,7 +280,7 @@ fn project_tools_snapshot(
     let base = div()
         .flex()
         .flex_shrink_0()
-        .gap(if collapsed { px(10.0) } else { px(4.0) })
+        .gap(px(4.0))
         .px(if collapsed { px(20.0) } else { px(10.0) })
         .py_3();
 
@@ -288,9 +288,27 @@ fn project_tools_snapshot(
         let add_project_label =
             project_column_text(language, "sidebar.footer.add_project", "Add Project");
         let settings_label = project_column_text(language, "menu.settings", "Settings");
-        let more_label = project_column_text(language, "sidebar.footer.more", "More");
+        let tasks_sidebar_label =
+            project_column_text(language, "menu.view.tasks_sidebar", "Worktree Sidebar");
+        let more_label = project_column_text(
+            language,
+            "sidebar.footer.diagnostics_logs",
+            "Diagnostics & Logs",
+        );
         base.flex_col()
             .items_center()
+            .child(project_tool_button(
+                ProjectToolButtonProps {
+                    icon: HeroIconName::Square3Stack3d,
+                    label: None,
+                    tooltip: tasks_sidebar_label,
+                    id: "project-tasks-footer",
+                    app_entity: app_entity.clone(),
+                },
+                window,
+                cx,
+                |app, _event, window, cx| app.toggle_task_column(window, cx),
+            ))
             .child(project_tool_button(
                 ProjectToolButtonProps {
                     icon: HeroIconName::Plus,
@@ -316,24 +334,46 @@ fn project_tools_snapshot(
                 |app, _event, window, cx| app.open_settings_window(window, cx),
             ))
             .child(project_more_button(
-                None, more_label, language, app_entity, cx,
+                None,
+                more_label,
+                language,
+                app_entity.clone(),
+                cx,
+            ))
+            .child(project_column_toggle_button(
+                collapsed,
+                language,
+                None,
+                app_entity.clone(),
+                window,
+                cx,
             ))
             .into_any_element()
     } else {
         let add_project_label =
             project_column_text(language, "sidebar.footer.add_project", "Add Project");
         let settings_label = project_column_text(language, "menu.settings", "Settings");
-        let more_label = project_column_text(language, "sidebar.footer.more", "More");
+        let tasks_sidebar_label =
+            project_column_text(language, "menu.view.tasks_sidebar", "Worktree Sidebar");
+        let more_label = project_column_text(
+            language,
+            "sidebar.footer.diagnostics_logs",
+            "Diagnostics & Logs",
+        );
         let toggle_label = project_column_text(language, "sidebar.collapse", "Collapse Sidebar");
         base.flex_col()
             .items_start()
-            .child(project_column_toggle_button(
-                collapsed,
-                language,
-                Some(toggle_label),
-                app_entity.clone(),
+            .child(project_tool_button(
+                ProjectToolButtonProps {
+                    icon: HeroIconName::Square3Stack3d,
+                    label: Some(tasks_sidebar_label.clone()),
+                    tooltip: tasks_sidebar_label,
+                    id: "project-tasks-footer",
+                    app_entity: app_entity.clone(),
+                },
                 window,
                 cx,
+                |app, _event, window, cx| app.toggle_task_column(window, cx),
             ))
             .child(project_tool_button(
                 ProjectToolButtonProps {
@@ -363,7 +403,15 @@ fn project_tools_snapshot(
                 Some(more_label.clone()),
                 more_label,
                 language,
+                app_entity.clone(),
+                cx,
+            ))
+            .child(project_column_toggle_button(
+                collapsed,
+                language,
+                Some(toggle_label),
                 app_entity,
+                window,
                 cx,
             ))
             .into_any_element()
@@ -504,44 +552,23 @@ fn project_more_button(
             cx,
         ))
         .dropdown_menu_with_anchor(gpui::Anchor::BottomLeft, move |menu, _window, _cx| {
-            let fallback_entity = menu_entity.clone();
-            let about_entity = menu_entity.clone();
-            let updates_entity = menu_entity.clone();
-            let diagnostics_entity = menu_entity.clone();
-            let runtime_log_entity = menu_entity.clone();
-            let live_log_entity = menu_entity.clone();
-            let open_folder_entity = menu_entity.clone();
-            let website_entity = menu_entity.clone();
-            let github_entity = menu_entity.clone();
             let entries = project_help_menu_entries(&language);
+            let entry_entity = menu_entity.clone();
             entries.into_iter().fold(
                 menu.min_w(px(256.0)).max_w(px(360.0)),
                 move |menu, entry| match entry {
-                    ProjectHelpMenuEntry::Separator => menu.separator(),
                     ProjectHelpMenuEntry::Item {
                         label,
                         icon,
                         action_id,
-                    } => {
-                        let entity = match action_id {
-                            "help:about" => about_entity.clone(),
-                            "help:check-updates" => updates_entity.clone(),
-                            "help:export-diagnostics" => diagnostics_entity.clone(),
-                            "help:runtime-log" => runtime_log_entity.clone(),
-                            "help:live-log" => live_log_entity.clone(),
-                            "help:open-folder" => open_folder_entity.clone(),
-                            "help:website" => website_entity.clone(),
-                            "help:github" => github_entity.clone(),
-                            _ => fallback_entity.clone(),
-                        };
-                        menu.item(PopupMenuItem::new(label).icon(icon).on_click(
-                            move |_, window, cx| {
-                                cx.update_entity(&entity, |app, cx| {
-                                    app.apply_project_help_action(action_id, window, cx);
-                                });
-                            },
-                        ))
-                    }
+                    } => menu.item(PopupMenuItem::new(label).icon(icon).on_click({
+                        let entity = entry_entity.clone();
+                        move |_, window, cx| {
+                            cx.update_entity(&entity, |app, cx| {
+                                app.apply_project_help_action(action_id, window, cx);
+                            });
+                        }
+                    })),
                 },
             )
         });
@@ -566,60 +593,26 @@ enum ProjectHelpMenuEntry {
         icon: HeroIconName,
         action_id: &'static str,
     },
-    Separator,
 }
 
 fn project_help_menu_entries(language: &str) -> Vec<ProjectHelpMenuEntry> {
-    use ProjectHelpMenuEntry::{Item, Separator};
+    use ProjectHelpMenuEntry::Item;
     let label = |key: &str, fallback: &str| project_column_text(language, key, fallback);
     vec![
         Item {
-            label: label("menu.file.open_folder", "Open Folder..."),
-            icon: HeroIconName::FolderOpen,
-            action_id: "help:open-folder",
-        },
-        Separator,
-        Item {
-            label: label("menu.app.about_format", "About Codux").replace("%@", "Codux"),
-            icon: HeroIconName::InformationCircle,
-            action_id: "help:about",
-        },
-        Item {
-            label: label("menu.app.check_updates", "Check for Updates..."),
-            icon: HeroIconName::ArrowPath,
-            action_id: "help:check-updates",
-        },
-        Item {
-            label: label("menu.app.star_github", "Star on GitHub"),
-            icon: HeroIconName::Star,
-            action_id: "help:star-github",
-        },
-        Separator,
-        Item {
             label: label("menu.help.export_diagnostics", "Export Diagnostics..."),
-            icon: HeroIconName::Document,
+            icon: HeroIconName::DocumentArrowDown,
             action_id: "help:export-diagnostics",
         },
         Item {
             label: label("menu.help.open_runtime_log", "Open Runtime Log"),
-            icon: HeroIconName::Document,
+            icon: HeroIconName::DocumentText,
             action_id: "help:runtime-log",
         },
         Item {
             label: label("menu.help.open_live_log", "Open Live Log"),
-            icon: HeroIconName::Document,
+            icon: HeroIconName::DocumentText,
             action_id: "help:live-log",
-        },
-        Separator,
-        Item {
-            label: label("menu.help.website", "Official Website"),
-            icon: HeroIconName::ArrowTopRightOnSquare,
-            action_id: "help:website",
-        },
-        Item {
-            label: label("menu.help.github", "GitHub"),
-            icon: HeroIconName::ArrowPathRoundedSquare,
-            action_id: "help:github",
         },
     ]
 }
