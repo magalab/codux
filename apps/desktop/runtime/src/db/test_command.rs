@@ -70,6 +70,7 @@ pub(super) fn run_db_test_command(
 fn test_statement(profile: &DBConnectionProfile) -> &'static str {
     match profile.engine.as_str() {
         "sqlite" | "postgres" | "mysql" => "SELECT 1 AS ok",
+        "redis" => "PING",
         _ => "SELECT 1 AS ok",
     }
 }

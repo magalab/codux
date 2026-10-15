@@ -92,11 +92,20 @@ pub(super) fn sanitize_request(
         "postgres" | "postgresql" | "pg" => "postgres",
         "mysql" | "mariadb" => "mysql",
         "sqlite" | "sqlite3" => "sqlite",
-        _ => return Err("Database engine must be postgres, mysql, or sqlite.".to_string()),
+        "redis" => "redis",
+        _ => return Err("Database engine must be postgres, mysql, sqlite, or redis.".to_string()),
     }
     .to_string();
-    let database = normalized(&request.database)
-        .ok_or_else(|| "Database name/path cannot be empty.".to_string())?;
+    let database = normalized(&request.database).unwrap_or_else(|| {
+        if engine == "redis" {
+            "0".to_string()
+        } else {
+            String::new()
+        }
+    });
+    if database.is_empty() {
+        return Err("Database name/path cannot be empty.".to_string());
+    }
     let host = request
         .host
         .as_deref()
@@ -113,7 +122,7 @@ pub(super) fn sanitize_request(
         .as_deref()
         .and_then(normalized)
         .unwrap_or_default();
-    if engine != "sqlite" && username.is_empty() {
+    if !matches!(engine.as_str(), "sqlite" | "redis") && username.is_empty() {
         return Err("Database username cannot be empty.".to_string());
     }
     let port = request.port.unwrap_or_else(|| default_port(&engine));
@@ -146,6 +155,7 @@ pub(super) fn default_port(engine: &str) -> u16 {
     match engine {
         "mysql" => 3306,
         "postgres" => 5432,
+        "redis" => 6379,
         _ => 1,
     }
 }

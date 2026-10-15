@@ -135,6 +135,48 @@ fn sqlite_profiles_do_not_require_username_or_host() {
     assert!(profile.username.is_empty());
 }
 
+#[test]
+fn redis_profiles_use_default_port_and_do_not_require_username() {
+    let profile = sanitize_request(DBProfileUpsertRequest {
+        id: None,
+        project_id: "project-a".to_string(),
+        name: "Cache".to_string(),
+        engine: "redis".to_string(),
+        host: Some("localhost".to_string()),
+        port: None,
+        database: "0".to_string(),
+        username: None,
+        password: Some("secret".to_string()),
+        ssl_mode: None,
+        read_only: true,
+    })
+    .unwrap();
+
+    assert_eq!(profile.engine, "redis");
+    assert_eq!(profile.port, 6379);
+    assert!(profile.username.is_empty());
+}
+
+#[test]
+fn redis_profiles_default_to_database_zero() {
+    let profile = sanitize_request(DBProfileUpsertRequest {
+        id: None,
+        project_id: "project-a".to_string(),
+        name: "Cache".to_string(),
+        engine: "redis".to_string(),
+        host: Some("127.0.0.1".to_string()),
+        port: Some(6379),
+        database: String::new(),
+        username: None,
+        password: Some("secret".to_string()),
+        ssl_mode: None,
+        read_only: true,
+    })
+    .unwrap();
+
+    assert_eq!(profile.database, "0");
+}
+
 #[cfg(not(windows))]
 #[test]
 fn codux_db_wrapper_lists_project_profiles_without_secrets() {

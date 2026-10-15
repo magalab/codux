@@ -5,7 +5,7 @@ use sqlx::{Any, AnyConnection, Column, Connection, Row, TypeInfo, ValueRef, any:
 use std::{
     env, fs,
     io::{BufRead, BufReader, Read, Write},
-    net::TcpStream,
+    net::{TcpStream, ToSocketAddrs},
     path::{Path, PathBuf},
     process::Command,
     time::Duration,
@@ -15,6 +15,9 @@ const DB_QUERY_TIMEOUT_SECONDS: u64 = 15;
 const DB_QUERY_MAX_ROWS: usize = 100;
 const AGENT_WORKTREE_ERROR_OSC: &[u8] = b"\x1b]9;4;2\x07";
 const DB_QUERY_MAX_CELL_CHARS: usize = 240;
+const REDIS_MAX_ARRAY_ELEMENTS: usize = 10_000;
+const REDIS_MAX_BULK_BYTES: usize = 4 * 1024 * 1024;
+const REDIS_MAX_LINE_BYTES: usize = 64 * 1024;
 const DB_URL_ENCODE_SET: &AsciiSet = &CONTROLS
     .add(b' ')
     .add(b'"')
@@ -1081,6 +1084,10 @@ fn db_statement() -> Result<String, String> {
 }
 
 fn run_db_query(profile: &Value, statement: &str) -> Result<Value, String> {
+    let engine = string_field(profile, "engine").to_ascii_lowercase();
+    if engine == "redis" {
+        return run_redis_command(profile, statement);
+    }
     if !statement_allowed(profile, statement) {
         return Err("codux-db: read-only database profile only allows SELECT/SHOW/WITH/EXPLAIN/PRAGMA statements".to_string());
     }
@@ -1089,7 +1096,6 @@ fn run_db_query(profile: &Value, statement: &str) -> Result<Value, String> {
         .get("readOnly")
         .and_then(Value::as_bool)
         .unwrap_or(false);
-    let engine = string_field(profile, "engine").to_ascii_lowercase();
     let future = async move {
         sqlx::any::install_default_drivers();
         let mut connection = AnyConnection::connect(&url)
@@ -1204,6 +1210,266 @@ fn db_connection_url(profile: &Value) -> Result<String, String> {
         ssl_key,
         ssl_mode
     ))
+}
+
+fn run_redis_command(profile: &Value, statement: &str) -> Result<Value, String> {
+    if matches!(
+        string_field(profile, "sslMode")
+            .to_ascii_lowercase()
+            .as_str(),
+        "require" | "required"
+    ) {
+        return Err("codux-db: Redis TLS is not supported by this MVP".to_string());
+    }
+    let args = redis_command_args(statement)?;
+    if args.is_empty() {
+        return Err("codux-db: missing Redis command".to_string());
+    }
+    if profile
+        .get("readOnly")
+        .and_then(Value::as_bool)
+        .unwrap_or(false)
+        && !redis_command_allowed(&args[0])
+    {
+        return Err("codux-db: read-only Redis profile only allows safe read commands".to_string());
+    }
+
+    let host = string_field(profile, "host");
+    if host.is_empty() {
+        return Err("codux-db: Redis host is required".to_string());
+    }
+    let port = db_port_field(profile);
+    let address = redis_socket_address(&host, port);
+    let timeout = Duration::from_secs(DB_QUERY_TIMEOUT_SECONDS);
+    let socket = address
+        .to_socket_addrs()
+        .map_err(|error| format!("codux-db: failed to resolve Redis host: {error}"))?
+        .next()
+        .ok_or_else(|| "codux-db: Redis host resolved to no addresses".to_string())?;
+    let mut stream = TcpStream::connect_timeout(&socket, timeout)
+        .map_err(|error| format!("codux-db: failed to connect to Redis: {error}"))?;
+    stream
+        .set_read_timeout(Some(timeout))
+        .and_then(|_| stream.set_write_timeout(Some(timeout)))
+        .map_err(|error| format!("codux-db: failed to configure Redis connection: {error}"))?;
+
+    let password = string_field(profile, "password");
+    if !password.is_empty() {
+        let username = string_field(profile, "username");
+        let auth = if username.is_empty() {
+            vec!["AUTH".to_string(), password]
+        } else {
+            vec!["AUTH".to_string(), username, password]
+        };
+        redis_write_command(&mut stream, &auth)?;
+        let _ = redis_read_value(&mut stream)?;
+    }
+
+    let database = string_field(profile, "database");
+    if !database.is_empty() && database != "0" {
+        if database.parse::<u16>().is_err() {
+            return Err("codux-db: Redis database must be a numeric index".to_string());
+        }
+        let select = vec!["SELECT".to_string(), database];
+        redis_write_command(&mut stream, &select)?;
+        let _ = redis_read_value(&mut stream)?;
+    }
+
+    redis_write_command(&mut stream, &args)?;
+    let value = redis_read_value(&mut stream)?;
+    Ok(redis_value_result(value))
+}
+
+fn redis_command_args(statement: &str) -> Result<Vec<String>, String> {
+    let mut args = Vec::new();
+    let mut current = String::new();
+    let mut token_started = false;
+    let mut quote = None;
+    let mut escaped = false;
+    for character in statement.trim().chars() {
+        if escaped {
+            current.push(character);
+            token_started = true;
+            escaped = false;
+        } else if character == '\\' {
+            token_started = true;
+            escaped = true;
+        } else if let Some(delimiter) = quote {
+            if character == delimiter {
+                quote = None;
+            } else {
+                current.push(character);
+                token_started = true;
+            }
+        } else if matches!(character, '\'' | '"') {
+            quote = Some(character);
+            token_started = true;
+        } else if character.is_whitespace() {
+            if token_started {
+                args.push(std::mem::take(&mut current));
+                token_started = false;
+            }
+        } else {
+            current.push(character);
+            token_started = true;
+        }
+    }
+    if escaped || quote.is_some() {
+        return Err("codux-db: invalid Redis command quoting".to_string());
+    }
+    if token_started {
+        args.push(current);
+    }
+    Ok(args)
+}
+
+fn redis_command_allowed(command: &str) -> bool {
+    matches!(
+        command.to_ascii_uppercase().as_str(),
+        "GET"
+            | "MGET"
+            | "HGET"
+            | "HMGET"
+            | "HGETALL"
+            | "EXISTS"
+            | "TYPE"
+            | "TTL"
+            | "PTTL"
+            | "LLEN"
+            | "LRANGE"
+            | "SMEMBERS"
+            | "SISMEMBER"
+            | "SCARD"
+            | "ZCARD"
+            | "ZRANGE"
+            | "DBSIZE"
+            | "PING"
+            | "INFO"
+            | "SCAN"
+    )
+}
+
+fn redis_write_command(stream: &mut TcpStream, args: &[String]) -> Result<(), String> {
+    let mut command = format!("*{}\r\n", args.len());
+    for argument in args {
+        command.push_str(&format!("${}\r\n{}\r\n", argument.len(), argument));
+    }
+    stream
+        .write_all(command.as_bytes())
+        .map_err(|error| format!("codux-db: failed to write Redis command: {error}"))
+}
+
+fn redis_read_value(stream: &mut TcpStream) -> Result<Value, String> {
+    redis_read_value_from(stream)
+}
+
+fn redis_read_value_from(stream: &mut TcpStream) -> Result<Value, String> {
+    let mut prefix = [0_u8; 1];
+    stream
+        .read_exact(&mut prefix)
+        .map_err(|error| format!("codux-db: failed to read Redis response: {error}"))?;
+    match prefix[0] {
+        b'+' => Ok(Value::String(redis_read_line(stream)?)),
+        b'-' => Err(format!(
+            "codux-db: Redis command failed: {}",
+            redis_read_line(stream)?
+        )),
+        b':' => Ok(redis_read_line(stream)?.parse::<i64>().map_or_else(
+            |_| Value::String("<invalid integer>".to_string()),
+            |value| json!(value),
+        )),
+        b'$' => {
+            let length = redis_read_line(stream)?
+                .parse::<i64>()
+                .map_err(|_| "codux-db: invalid Redis bulk response".to_string())?;
+            if length < 0 {
+                return Ok(Value::Null);
+            }
+            if length as usize > REDIS_MAX_BULK_BYTES {
+                return Err(format!(
+                    "codux-db: Redis bulk response exceeds {} bytes",
+                    REDIS_MAX_BULK_BYTES
+                ));
+            }
+            let mut bytes = vec![0_u8; length as usize];
+            stream
+                .read_exact(&mut bytes)
+                .map_err(|error| format!("codux-db: failed to read Redis value: {error}"))?;
+            let mut crlf = [0_u8; 2];
+            stream.read_exact(&mut crlf).map_err(|error| {
+                format!("codux-db: failed to read Redis value terminator: {error}")
+            })?;
+            Ok(Value::String(String::from_utf8_lossy(&bytes).into_owned()))
+        }
+        b'*' => {
+            let count = redis_read_line(stream)?
+                .parse::<i64>()
+                .map_err(|_| "codux-db: invalid Redis array response".to_string())?;
+            if count < 0 {
+                return Ok(Value::Null);
+            }
+            if count as usize > REDIS_MAX_ARRAY_ELEMENTS {
+                return Err(format!(
+                    "codux-db: Redis array response exceeds {} elements",
+                    REDIS_MAX_ARRAY_ELEMENTS
+                ));
+            }
+            let mut values = Vec::with_capacity(count as usize);
+            for _ in 0..count {
+                values.push(redis_read_value_from(stream)?);
+            }
+            Ok(Value::Array(values))
+        }
+        _ => Err("codux-db: unsupported Redis response type".to_string()),
+    }
+}
+
+fn redis_read_line(stream: &mut TcpStream) -> Result<String, String> {
+    let mut line = Vec::new();
+    loop {
+        let mut byte = [0_u8; 1];
+        stream
+            .read_exact(&mut byte)
+            .map_err(|error| format!("codux-db: failed to read Redis response: {error}"))?;
+        line.push(byte[0]);
+        if line.len() > REDIS_MAX_LINE_BYTES {
+            return Err(format!(
+                "codux-db: Redis response line exceeds {} bytes",
+                REDIS_MAX_LINE_BYTES
+            ));
+        }
+        if byte[0] == b'\n' {
+            break;
+        }
+    }
+    if line.len() < 2 || line[line.len() - 2..] != *b"\r\n" {
+        return Err("codux-db: invalid Redis response line".to_string());
+    }
+    line.truncate(line.len() - 2);
+    Ok(String::from_utf8_lossy(&line).into_owned())
+}
+
+fn redis_socket_address(host: &str, port: u16) -> String {
+    if host.contains(':') && !host.starts_with('[') {
+        format!("[{host}]:{port}")
+    } else {
+        format!("{host}:{port}")
+    }
+}
+
+fn redis_value_result(value: Value) -> Value {
+    let values = match value {
+        Value::Array(values) => values,
+        value => vec![value],
+    };
+    let total_rows = values.len();
+    json!({
+        "ok": true,
+        "rowCount": total_rows,
+        "totalRows": total_rows,
+        "truncated": false,
+        "rows": values.into_iter().map(|value| json!({ "value": value })).collect::<Vec<_>>(),
+    })
 }
 
 fn statement_allowed(profile: &Value, statement: &str) -> bool {
@@ -1554,6 +1820,7 @@ fn db_port_field(profile: &Value) -> u16 {
         .as_str()
     {
         "mysql" | "mariadb" => 3306,
+        "redis" => 6379,
         "sqlite" | "sqlite3" => 1,
         _ => 5432,
     };
@@ -1621,6 +1888,38 @@ mod tests {
             ])
             .is_err()
         );
+    }
+
+    #[test]
+    fn parses_redis_commands_with_quoted_arguments() {
+        assert_eq!(
+            redis_command_args(r#"SET greeting "hello world""#).unwrap(),
+            vec!["SET", "greeting", "hello world"]
+        );
+        assert_eq!(
+            redis_command_args("HGET user:1 display_name").unwrap(),
+            vec!["HGET", "user:1", "display_name"]
+        );
+        assert_eq!(
+            redis_command_args("SET empty ''").unwrap(),
+            vec!["SET", "empty", ""]
+        );
+        assert!(redis_command_args("GET 'unterminated").is_err());
+    }
+
+    #[test]
+    fn formats_redis_ipv6_socket_addresses() {
+        assert_eq!(redis_socket_address("127.0.0.1", 6379), "127.0.0.1:6379");
+        assert_eq!(redis_socket_address("::1", 6379), "[::1]:6379");
+        assert_eq!(redis_socket_address("[::1]", 6379), "[::1]:6379");
+    }
+
+    #[test]
+    fn redis_read_only_allowlist_blocks_mutations() {
+        assert!(redis_command_allowed("GET"));
+        assert!(redis_command_allowed("hgetall"));
+        assert!(!redis_command_allowed("SET"));
+        assert!(!redis_command_allowed("DEL"));
     }
 
     #[test]

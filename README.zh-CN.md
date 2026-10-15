@@ -76,7 +76,7 @@ Windows 或不用 Homebrew：见[下载](#下载)。
 Agent 干活离不开服务器和数据库——但把密码贴进提示词、或让模型去读你的配置文件，正是凭证泄露的常见方式。Codux 把连接配置存在本地，只给 agent 两个安全命令：
 
 - **`codux-ssh`** —— agent 运行 `codux-ssh list` 只能看到配置名和主机，连接由 wrapper 代为完成。密码和密钥在 Codux 的辅助进程内部注入，永远不会进入模型上下文、会话记录或 shell 历史。
-- **`codux-db`** —— 对 MySQL / PostgreSQL / SQLite 做同样的隔离：在 Codux 里保存一次，agent 按配置名查询。只读配置由 wrapper 强制执行单语句白名单，模型无法自行提权。
+- **`codux-db`** —— 对 MySQL / PostgreSQL / SQLite / Redis 做同样的隔离：在 Codux 里保存一次，agent 按配置名查询。只读配置由 wrapper 强制执行 SQL/Redis 命令白名单，模型无法自行提权。Redis 当前仅支持明文 TCP。
 - **零项目配置。** 所有支持的 CLI 都会通过 Codux 环境指令自动知道这两个命令的存在。
 
 <p align="center"><img src="docs/images/credential-isolation.png" alt="codux-ssh list 只显示配置名和主机——没有任何密码"></p>

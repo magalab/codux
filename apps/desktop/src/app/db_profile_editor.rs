@@ -61,6 +61,7 @@ fn db_engine_options() -> Vec<CoduxSelectOption> {
         CoduxSelectOption::new("postgres", "PostgreSQL"),
         CoduxSelectOption::new("mysql", "MySQL / MariaDB"),
         CoduxSelectOption::new("sqlite", "SQLite"),
+        CoduxSelectOption::new("redis", "Redis"),
     ]
 }
 
@@ -192,6 +193,8 @@ pub(in crate::app) fn db_profile_editor_workspace(
                             DbDialogInputOptions {
                                 placeholder: if app.db_draft_engine == "mysql" {
                                     "3306"
+                                } else if app.db_draft_engine == "redis" {
+                                    "6379"
                                 } else {
                                     "5432"
                                 }
@@ -229,15 +232,19 @@ pub(in crate::app) fn db_profile_editor_workspace(
                     cx,
                     |app, value, window, cx| app.set_db_draft_field("password", value, window, cx),
                 ))
-                .child(db_dialog_select(
-                    "ssl",
-                    labels.ssl_mode.clone(),
-                    &app.db_draft_ssl_mode,
-                    (db_ssl_options(&labels), labels.select.clone()),
-                    window,
-                    cx,
-                    |app, value, window, cx| app.set_db_draft_field("sslMode", value, window, cx),
-                ))
+                .when(app.db_draft_engine != "redis", |this| {
+                    this.child(db_dialog_select(
+                        "ssl",
+                        labels.ssl_mode.clone(),
+                        &app.db_draft_ssl_mode,
+                        (db_ssl_options(&labels), labels.select.clone()),
+                        window,
+                        cx,
+                        |app, value, window, cx| {
+                            app.set_db_draft_field("sslMode", value, window, cx)
+                        },
+                    ))
+                })
             })
             .child(db_dialog_input(
                 "database",
@@ -246,6 +253,8 @@ pub(in crate::app) fn db_profile_editor_workspace(
                 DbDialogInputOptions {
                     placeholder: if app.db_draft_engine == "sqlite" {
                         "/path/to/app.sqlite3"
+                    } else if app.db_draft_engine == "redis" {
+                        "0"
                     } else {
                         "app"
                     }

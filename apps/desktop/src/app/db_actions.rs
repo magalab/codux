@@ -113,11 +113,21 @@ impl CoduxApp {
             "name" => self.db_draft_name = value,
             "engine" => {
                 self.db_draft_engine = value;
-                if self.db_draft_engine == "mysql" && self.db_draft_port.trim() == "5432" {
-                    self.db_draft_port = "3306".to_string();
-                } else if self.db_draft_engine == "postgres" && self.db_draft_port.trim() == "3306"
-                {
-                    self.db_draft_port = "5432".to_string();
+                if self.db_draft_engine == "redis" {
+                    if matches!(self.db_draft_port.trim(), "5432" | "3306") {
+                        self.db_draft_port = "6379".to_string();
+                    }
+                    self.db_draft_ssl_mode = "disable".to_string();
+                } else if self.db_draft_engine == "mysql" {
+                    if matches!(self.db_draft_port.trim(), "5432" | "6379") {
+                        self.db_draft_port = "3306".to_string();
+                    }
+                    self.db_draft_ssl_mode = "prefer".to_string();
+                } else if self.db_draft_engine == "postgres" {
+                    if matches!(self.db_draft_port.trim(), "3306" | "6379") {
+                        self.db_draft_port = "5432".to_string();
+                    }
+                    self.db_draft_ssl_mode = "prefer".to_string();
                 }
             }
             "host" => self.db_draft_host = value,

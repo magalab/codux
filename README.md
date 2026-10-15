@@ -76,7 +76,7 @@ On Windows, or without Homebrew: see [Download](#download).
 Agents constantly need servers and databases — but pasting a password into a prompt, or letting the model read your config files, is exactly how credentials leak. Codux stores connection profiles locally and hands agents two safe commands instead:
 
 - **`codux-ssh`** — the agent runs `codux-ssh list`, sees profile names and hosts only, and connects through the wrapper. Passwords and keys are injected inside Codux's helper process; they never enter the model's context, the transcript, or your shell history.
-- **`codux-db`** — the same isolation for MySQL / PostgreSQL / SQLite: saved once in Codux, queried by profile name. Read-only profiles are enforced inside the wrapper with a single-statement allowlist, so the model can't escalate its own access.
+- **`codux-db`** — the same isolation for MySQL / PostgreSQL / SQLite / Redis: saved once in Codux, queried by profile name. Read-only profiles are enforced inside the wrapper with a command allowlist, so the model can't escalate its own access. Redis currently supports plain TCP only.
 - **Zero per-project setup.** Every supported CLI learns about these commands automatically through Codux's environment directives.
 
 <p align="center"><img src="docs/images/credential-isolation.png" alt="codux-ssh list shows profile names and hosts only — never passwords"></p>
