@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/duxweb/codux-flutter/releases">
-    <img src="https://img.shields.io/badge/版本-0.1.1-22d3ee?style=flat-square" alt="版本">
+  <a href="https://github.com/magalab/codux/releases">
+    <img src="https://img.shields.io/badge/移动端-2.0.3-22d3ee?style=flat-square" alt="Codux Mobile 2.0.3">
   </a>
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/协议-GPLv3-blue?style=flat-square" alt="开源协议">
@@ -17,9 +17,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/duxweb/codux">macOS 端 Codux</a> &middot;
-  <a href="https://github.com/duxweb/codux-flutter/releases">下载</a> &middot;
-  <a href="https://github.com/duxweb/codux-flutter/issues">反馈</a>
+  <a href="https://github.com/magalab/codux">macOS 端 Codux</a> &middot;
+  <a href="https://github.com/magalab/codux/releases">下载</a> &middot;
+  <a href="https://github.com/magalab/codux/issues">反馈</a>
 </p>
 
 <p align="center">
@@ -56,7 +56,7 @@ Codux Desktop 负责真实项目、终端会话、AI 工具运行、Git/worktree
 | 快捷键 | 可用 | 双排工具栏包含 Esc、Tab、复制、粘贴、上传、方向键、删除、回车、Ctrl、Shift、Alt、键盘开关和 `^C`。 |
 | 文件 | 可用 | 浏览项目文件、记忆每个项目目录、打开/编辑文件、重命名、复制路径、删除。 |
 | AI 统计 | 可用 | 展示 macOS 端转发的当前项目和近期 AI 用量。 |
-| 更新检查 | 可用 | 读取 `duxweb/codux-flutter` 最新 GitHub Release。 |
+| 更新检查 | 可用 | 检查 `magalab/codux` 最近一个包含 Android APK 的 `mobile-v*` Release。 |
 
 ## 架构
 
@@ -131,20 +131,19 @@ flutter build apk --release --dart-define=CODUX_LOG_LEVEL=warn
 - `error`
 - `off`
 
-默认等级是 `warn`。Release workflow 默认也使用 `warn`，必要时可在手动 workflow 中调整。
+应用默认使用 `warn`；需要排查问题时可在构建时覆盖日志等级。
 
 ## 发布
 
-移动端源码维护在当前 monorepo 的 `apps/mobile` 下。移动端签名和公开发布继续放在遗留的 `duxweb/codux-flutter` 仓库，这样不需要迁移已有 Android / iOS 签名 secrets：
+移动端在本仓库的 `apps/mobile` 下开发、签名和发布：
 
 - `CHANGELOG.md` 和 `CHANGELOG.zh-CN.md` 记录版本更新。
 - `scripts/release/build-release-notes.sh` 从中英文更新日志提取 GitHub Release 内容。
-- `duxweb/codux` 是桌面端、共享 crates 和移动端源码仓库。
-- `duxweb/codux-flutter` 是移动端发布仓库。它的 workflows 从 monorepo 源码构建，并使用现有移动端 secrets 发布 GitHub Release / TestFlight 产物。
+- `magalab/codux` 是桌面端、共享 crates 和移动端源码及发布仓库。
 
 ### Android 签名
 
-Android 正式发布需要在 `duxweb/codux-flutter` 配置这些 secrets：
+Android 签名发布需要在 `magalab/codux` 仓库配置这些 secrets：
 
 - `CODUX_ANDROID_KEYSTORE_BASE64`
 - `CODUX_ANDROID_KEYSTORE_PASSWORD`
@@ -157,41 +156,22 @@ Android 正式发布需要在 `duxweb/codux-flutter` 配置这些 secrets：
 base64 -i codux-release.jks | pbcopy
 ```
 
-本地没有 `android/key.properties` 时，release 构建会回退到 debug 签名，方便本地 `flutter run --release`。GitHub 发布时如果已配置签名 secrets 会使用正式签名，否则会带 workflow warning 发布同样的 debug 签名兜底 APK。
-
-### iOS 签名
-
-TestFlight 发布需要在 `duxweb/codux-flutter` 配置这些 secrets：
-
-- `IOS_DISTRIBUTION_CERT_BASE64`
-- `IOS_DISTRIBUTION_CERT_PASSWORD`
-- `IOS_PROVISIONING_PROFILE_BASE64`
-- `APP_STORE_CONNECT_API_KEY_ID`
-- `APP_STORE_CONNECT_API_ISSUER_ID`
-- `APP_STORE_CONNECT_API_KEY_P8_BASE64`
+Android 发布 workflow 要求四个签名 secret 全部配置齐全，缺少任一项都会失败。本地没有 `android/key.properties` 时，release 构建会使用 debug 密钥，仅供开发验证。
 
 ### 发布版本
 
 1. 在 `apps/mobile/CHANGELOG.md` 和 `apps/mobile/CHANGELOG.zh-CN.md` 写入目标版本更新记录。
-2. 如有需要，同步更新 `pubspec.yaml` 版本号。
-3. 在 `duxweb/codux` 提交发布变更，然后推送 `main` 和源码 tag：
+2. 将 `apps/mobile/pubspec.yaml` 版本号设为相同版本并递增 Android build number（例如 `2.0.3+55`）。workflow 会检查 tag 版本与 `pubspec.yaml` 一致。
+3. 提交并推送发布变更。推送 `mobile-vX.Y.Z` 标签即可独立于桌面端构建和发布签名 APK：
 
 ```bash
 cd <codux-repo>
-git tag v0.1.1
 git push origin main
-git push origin v0.1.1
+git tag mobile-v2.0.3
+git push origin mobile-v2.0.3
 ```
 
-4. 在 `duxweb/codux-flutter` 推送同名 tag，触发移动端发布 workflows：
-
-```bash
-cd <codux-flutter-release-repo>
-git tag v0.1.1
-git push origin v0.1.1
-```
-
-`duxweb/codux-flutter` 的移动端发布 workflows 会从匹配的 `duxweb/codux` tag 构建 `apps/mobile`，把 `Codux-Mobile-<version>-arm64-v8a-android.apk` 和 `SHA256SUMS.txt` 发布到移动端 GitHub Release，并可选上传 iOS IPA 到 TestFlight。
+`Release Codux Mobile (Android)` workflow 会按 `pubspec.yaml` 中的版本和 build number 构建 ARM64 APK、验证签名、生成 SHA-256 校验文件，并将两者发布到本仓库的 GitHub Release。也可以手动运行 workflow 并指定已有的 `mobile-vX.Y.Z` 标签。App 更新检查只读取包含 `.apk` 资源的 `mobile-v*` Release，因此桌面端单独发布不会误报为移动端更新。
 
 ## 目录结构
 
@@ -200,7 +180,7 @@ git push origin v0.1.1
 | `lib/` | Flutter 应用外壳、relay 客户端、页面、组件、主题和多语言。 |
 | `plugin/codux_protocol_ffi/` | Android、iOS 和桌面共用的 Rust 协议与终端 core FFI。 |
 | `android/` | Android 应用壳和发布签名配置。 |
-| `.github/workflows/` | 当前 monorepo 的桌面发布和正式 macOS 签名 workflow。 |
+| `.github/workflows/` | 桌面发布、Android 移动端发布和 macOS 正式签名 workflow。 |
 | `scripts/release/` | 更新日志提取脚本。 |
 | `docs/images/` | 截图预留目录。 |
 
@@ -210,5 +190,5 @@ Codux Mobile 使用 GNU General Public License v3.0，和 macOS 端 Codux 保持
 
 ## 相关项目
 
-- [Codux for macOS](https://github.com/duxweb/codux)
-- [Codux Mobile Releases](https://github.com/duxweb/codux-flutter/releases)
+- [Codux for macOS](https://github.com/magalab/codux)
+- [Codux Mobile Releases](https://github.com/magalab/codux/releases)

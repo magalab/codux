@@ -21,7 +21,7 @@
   <a href="https://codux.work">Website</a> &middot;
   <a href="https://codux.work/getting-started/">Docs</a> &middot;
   <a href="https://github.com/duxweb/codux/releases/latest">Download</a> &middot;
-  <a href="https://github.com/duxweb/codux-flutter/releases/latest">Mobile</a> &middot;
+  <a href="https://github.com/magalab/codux/releases">Mobile</a> &middot;
   <a href="https://github.com/duxweb/codux/issues">Feedback</a>
 </p>
 
@@ -169,7 +169,7 @@ Open the macOS `.dmg` and drag Codux to Applications; double-click the Windows i
 
 **Mobile app**
 
-Download the Android APK from the [latest Codux Mobile release](https://github.com/duxweb/codux-flutter/releases/latest), or get the iOS app on the [App Store](https://apps.apple.com/cn/app/codux/id6772156906).
+Download the Android APK from the [Codux GitHub Releases](https://github.com/magalab/codux/releases). The iOS app is available on the [App Store](https://apps.apple.com/cn/app/codux/id6772156906).
 
 > **Why is the iOS app paid?** Codux is fully open source (GPL-3.0); desktop and Android are free. The iOS price only covers Apple’s $99/year developer fee and revenue cut, and supports ongoing development — no subscriptions, no in-app purchases. Prefer not to pay? Build the identical app yourself from this repo's [`apps/mobile`](apps/mobile) source.
 

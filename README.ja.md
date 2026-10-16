@@ -21,7 +21,7 @@
   <a href="https://codux.work">Web サイト</a> &middot;
   <a href="https://codux.work/getting-started/">ドキュメント</a> &middot;
   <a href="https://github.com/duxweb/codux/releases/latest">ダウンロード</a> &middot;
-  <a href="https://github.com/duxweb/codux-flutter/releases/latest">モバイル</a> &middot;
+  <a href="https://github.com/magalab/codux/releases">モバイル</a> &middot;
   <a href="https://github.com/duxweb/codux/issues">フィードバック</a>
 </p>
 
@@ -169,7 +169,7 @@ macOS では `.dmg` を開いて Codux を Applications にドラッグします
 
 **モバイルアプリ**
 
-[最新の Codux Mobile リリース](https://github.com/duxweb/codux-flutter/releases/latest) から Android APK をダウンロード、iOS 版は [App Store](https://apps.apple.com/cn/app/codux/id6772156906) へ。
+[Codux GitHub Releases](https://github.com/magalab/codux/releases) から Android APK をダウンロード、iOS 版は [App Store](https://apps.apple.com/cn/app/codux/id6772156906) へ。
 
 > **iOS 版が有料なのはなぜ？** Codux は完全なオープンソース（GPL-3.0）で、デスクトップ版と Android 版は無料です。iOS の価格は Apple の年間 99 ドルの開発者費用と手数料を賄い、継続的な開発を支えるためのもので、サブスクリプションやアプリ内課金はありません。本リポジトリの [`apps/mobile`](apps/mobile) のソースから自分でビルドすれば無料で同じアプリを使えます。
 

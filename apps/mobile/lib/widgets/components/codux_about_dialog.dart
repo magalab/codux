@@ -36,7 +36,7 @@ class CoduxAboutDialog extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s),
           SelectableText(
-            'github.com/duxweb/codux-flutter',
+            'github.com/magalab/codux',
             style: TextStyle(color: accent, fontSize: 14),
           ),
         ],

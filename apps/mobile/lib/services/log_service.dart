@@ -29,7 +29,7 @@ class CoduxLog {
 
   static const _levelName = String.fromEnvironment(
     'CODUX_LOG_LEVEL',
-    defaultValue: 'info',
+    defaultValue: 'warn',
   );
 
   static CoduxLogLevel _level = _parse(_levelName);

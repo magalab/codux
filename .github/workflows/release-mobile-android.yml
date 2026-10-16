@@ -1,0 +1,217 @@
+name: Release Codux Mobile (Android)
+
+on:
+  push:
+    tags:
+      - "mobile-v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Mobile release tag to build, for example mobile-v2.0.3."
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-mobile-android-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Resolve release tag
+        id: release
+        shell: bash
+        env:
+          INPUT_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || '' }}
+          PUSH_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          tag="${INPUT_TAG:-$PUSH_TAG}"
+          if [[ ! "$tag" =~ ^mobile-v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid mobile release tag: $tag (expected mobile-vX.Y.Z[-suffix])" >&2
+            exit 1
+          fi
+          version="${tag#mobile-v}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Check out release source
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.release.outputs.tag }}
+          persist-credentials: false
+
+      - name: Match tag and app version
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          set -euo pipefail
+          pubspec_version="$(sed -nE 's/^version: ([^+]+)(\+.*)?$/\1/p' apps/mobile/pubspec.yaml)"
+          if [[ "$pubspec_version" != "$RELEASE_VERSION" ]]; then
+            echo "Tag version $RELEASE_VERSION does not match apps/mobile/pubspec.yaml ($pubspec_version)" >&2
+            exit 1
+          fi
+
+      - name: Validate Android signing secrets
+        shell: bash
+        env:
+          CODUX_ANDROID_KEYSTORE_BASE64: ${{ secrets.CODUX_ANDROID_KEYSTORE_BASE64 }}
+          CODUX_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.CODUX_ANDROID_KEYSTORE_PASSWORD }}
+          CODUX_ANDROID_KEY_ALIAS: ${{ secrets.CODUX_ANDROID_KEY_ALIAS }}
+          CODUX_ANDROID_KEY_PASSWORD: ${{ secrets.CODUX_ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in \
+            CODUX_ANDROID_KEYSTORE_BASE64 \
+            CODUX_ANDROID_KEYSTORE_PASSWORD \
+            CODUX_ANDROID_KEY_ALIAS \
+            CODUX_ANDROID_KEY_PASSWORD; do
+            if [[ -z "${!name}" ]]; then
+              echo "Required GitHub Actions secret is missing: $name" >&2
+              exit 1
+            fi
+          done
+
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install Android SDK and NDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.0.12077973"
+          ndk_home="$ANDROID_SDK_ROOT/ndk/27.0.12077973"
+          test -d "$ndk_home"
+          echo "ANDROID_NDK_HOME=$ndk_home" >> "$GITHUB_ENV"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Set up Rust Android target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk --locked
+
+      - name: Cache Rust and Gradle builds
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: mobile-android-${{ runner.os }}-${{ hashFiles('Cargo.lock', 'apps/mobile/pubspec.lock', 'apps/mobile/android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            mobile-android-${{ runner.os }}-
+
+      - name: Install Flutter dependencies
+        working-directory: apps/mobile
+        run: flutter pub get
+
+      - name: Configure release signing
+        working-directory: apps/mobile/android
+        shell: bash
+        env:
+          CODUX_ANDROID_KEYSTORE_BASE64: ${{ secrets.CODUX_ANDROID_KEYSTORE_BASE64 }}
+          CODUX_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.CODUX_ANDROID_KEYSTORE_PASSWORD }}
+          CODUX_ANDROID_KEY_ALIAS: ${{ secrets.CODUX_ANDROID_KEY_ALIAS }}
+          CODUX_ANDROID_KEY_PASSWORD: ${{ secrets.CODUX_ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$CODUX_ANDROID_KEYSTORE_BASE64" | base64 --decode > codux-release.jks
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          values = {
+              "storeFile": "codux-release.jks",
+              "storePassword": os.environ["CODUX_ANDROID_KEYSTORE_PASSWORD"],
+              "keyAlias": os.environ["CODUX_ANDROID_KEY_ALIAS"],
+              "keyPassword": os.environ["CODUX_ANDROID_KEY_PASSWORD"],
+          }
+
+          def escape(value):
+              return (value.replace("\\", "\\\\").replace("\n", "\\n")
+                      .replace("\r", "\\r").replace(":", "\\:")
+                      .replace("=", "\\=").replace(" ", "\\ "))
+
+          Path("key.properties").write_text(
+              "".join(f"{key}={escape(value)}\n" for key, value in values.items()),
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Build signed Android APK
+        working-directory: apps/mobile
+        run: flutter build apk --release --target-platform android-arm64 --dart-define=CODUX_LOG_LEVEL=warn
+
+      - name: Prepare release assets and notes
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist/mobile
+          "$ANDROID_SDK_ROOT/build-tools/36.0.0/apksigner" verify \
+            apps/mobile/build/app/outputs/flutter-apk/app-release.apk
+          cp apps/mobile/build/app/outputs/flutter-apk/app-release.apk \
+            "dist/mobile/Codux-Mobile-${RELEASE_VERSION}-arm64-v8a.apk"
+          (
+            cd dist/mobile
+            sha256sum "Codux-Mobile-${RELEASE_VERSION}-arm64-v8a.apk" > SHA256SUMS.txt
+          )
+          bash apps/mobile/scripts/release/build-release-notes.sh \
+            "$RELEASE_VERSION" \
+            dist/mobile/release-notes.md \
+            apps/mobile/CHANGELOG.md \
+            apps/mobile/CHANGELOG.zh-CN.md
+
+      - name: Publish GitHub Release
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "Codux Mobile $RELEASE_VERSION" \
+              --notes-file dist/mobile/release-notes.md \
+              --latest=false
+          else
+            gh release create "$RELEASE_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "Codux Mobile $RELEASE_VERSION" \
+              --notes-file dist/mobile/release-notes.md \
+              --latest=false
+          fi
+          gh release upload "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber \
+            dist/mobile/Codux-Mobile-"$RELEASE_VERSION"-arm64-v8a.apk \
+            dist/mobile/SHA256SUMS.txt
+
+      - name: Remove signing material
+        if: always()
+        working-directory: apps/mobile/android
+        run: rm -f codux-release.jks key.properties

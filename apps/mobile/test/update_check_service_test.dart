@@ -18,11 +18,22 @@ void main() {
     final service = UpdateCheckService(
       httpClient: _FakeHttpClient(
         (request) => http.Response(
-          jsonEncode({
-            'tag_name': 'v1.7.2',
-            'html_url':
-                'https://github.com/duxweb/codux-flutter/releases/tag/v1.7.2',
-          }),
+          jsonEncode([
+            {
+              'tag_name': 'v1.8.0',
+              'html_url': 'https://github.com/magalab/codux/releases/tag/v1.8.0',
+              'assets': [
+                {'name': 'Codux-Desktop.dmg'},
+              ],
+            },
+            {
+              'tag_name': 'mobile-v1.7.2',
+              'html_url': 'https://github.com/magalab/codux/releases/tag/mobile-v1.7.2',
+              'assets': [
+                {'name': 'Codux-Mobile-arm64-v8a.apk'},
+              ],
+            },
+          ]),
           200,
         ),
       ),
@@ -41,10 +52,15 @@ void main() {
       final service = UpdateCheckService(
         httpClient: _FakeHttpClient(
           (request) => http.Response(
-            jsonEncode({
-              'tag_name': 'v1.7.1',
-              'html_url': 'https://example.com',
-            }),
+            jsonEncode([
+              {
+                'tag_name': 'mobile-v1.7.1',
+                'html_url': 'https://example.com',
+                'assets': [
+                  {'name': 'Codux-Mobile.apk'},
+                ],
+              },
+            ]),
             200,
           ),
         ),

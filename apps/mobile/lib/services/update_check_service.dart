@@ -6,7 +6,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 class UpdateCheckService {
   const UpdateCheckService({
-    this.githubRepository = 'duxweb/codux-flutter',
+    this.githubRepository = 'magalab/codux',
     this.requestTimeout = const Duration(seconds: 10),
     http.Client? httpClient,
   }) : _httpClient = httpClient;
@@ -29,7 +29,7 @@ class UpdateCheckService {
 
   Future<UpdateCheckResult> checkGithub(PackageInfo info) async {
     final uri = Uri.parse(
-      'https://api.github.com/repos/$githubRepository/releases/latest',
+      'https://api.github.com/repos/$githubRepository/releases?per_page=100',
     );
     final response = await _get(
       uri,
@@ -53,11 +53,31 @@ class UpdateCheckService {
         currentBuildNumber: info.buildNumber,
       );
     }
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    final tag = '${json['tag_name'] ?? ''}'.trim();
-    final url = '${json['html_url'] ?? ''}'.trim();
+    final releases = jsonDecode(response.body) as List<dynamic>;
+    final release = releases.cast<Map<String, dynamic>>().firstWhere(
+      (release) {
+        final tag = '${release['tag_name'] ?? ''}'.trim();
+        if (!tag.startsWith('mobile-v')) return false;
+        final assets = release['assets'] as List<dynamic>? ?? const [];
+        return assets.any((asset) {
+          if (asset is! Map<String, dynamic>) return false;
+          final name = '${asset['name'] ?? ''}'.toLowerCase();
+          return name.endsWith('.apk');
+        });
+      },
+      orElse: () => <String, dynamic>{},
+    );
+    if (release.isEmpty) {
+      return UpdateCheckResult.toast(
+        key: 'update.noRelease',
+        currentVersion: info.version,
+        currentBuildNumber: info.buildNumber,
+      );
+    }
+    final tag = '${release['tag_name'] ?? ''}'.trim();
+    final url = '${release['html_url'] ?? ''}'.trim();
     return _versionOutcome(
-      remoteVersion: tag,
+      remoteVersion: tag.replaceFirst(RegExp(r'^mobile-'), ''),
       url: url,
       currentVersion: info.version,
       currentBuildNumber: info.buildNumber,

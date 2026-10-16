@@ -21,7 +21,7 @@
   <a href="https://codux.work">官网</a> &middot;
   <a href="https://codux.work/zh-cn/getting-started/">文档</a> &middot;
   <a href="https://github.com/duxweb/codux/releases/latest">下载</a> &middot;
-  <a href="https://github.com/duxweb/codux-flutter/releases/latest">移动端</a> &middot;
+  <a href="https://github.com/magalab/codux/releases">移动端</a> &middot;
   <a href="https://github.com/duxweb/codux/issues">反馈</a>
 </p>
 
@@ -169,7 +169,7 @@ macOS 打开 `.dmg` 拖进「应用程序」；Windows 双击安装。装好后�
 
 **移动端**
 
-从 [Codux Mobile 最新版本](https://github.com/duxweb/codux-flutter/releases/latest) 下载 Android APK，iOS 版见 [App Store](https://apps.apple.com/cn/app/codux/id6772156906)。
+从 [Codux GitHub Releases](https://github.com/magalab/codux/releases) 下载 Android APK，iOS 版见 [App Store](https://apps.apple.com/cn/app/codux/id6772156906)。
 
 > **为什么 iOS 版收费？** Codux 完全开源（GPL-3.0），桌面端与 Android 版免费。iOS 定价仅用于覆盖苹果每年 99 美元的开发者费用与收入抽成，支持项目持续开发，无订阅、无内购。不想付费？可从本仓库的 [`apps/mobile`](apps/mobile) 获取源码自行编译，功能完全一致。
 

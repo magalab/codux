@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/duxweb/codux-flutter/releases">
-    <img src="https://img.shields.io/badge/version-0.1.5-22d3ee?style=flat-square" alt="Version">
+  <a href="https://github.com/magalab/codux/releases">
+    <img src="https://img.shields.io/badge/mobile-2.0.3-22d3ee?style=flat-square" alt="Codux Mobile 2.0.3">
   </a>
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/license-GPLv3-blue?style=flat-square" alt="License">
@@ -17,9 +17,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/duxweb/codux">Codux for macOS</a> &middot;
-  <a href="https://github.com/duxweb/codux-flutter/releases">Download</a> &middot;
-  <a href="https://github.com/duxweb/codux-flutter/issues">Feedback</a>
+  <a href="https://github.com/magalab/codux">Codux for macOS</a> &middot;
+  <a href="https://github.com/magalab/codux/releases">Download</a> &middot;
+  <a href="https://github.com/magalab/codux/issues">Feedback</a>
 </p>
 
 <p align="center">
@@ -56,7 +56,7 @@ The mobile client focuses on three things:
 | Quick Keys | Ready | Two-row terminal toolbar with Esc, Tab, Copy, Paste, Upload, arrows, Delete, Enter, Ctrl, Shift, Alt, keyboard toggle, and `^C`. |
 | Files | Ready | Browse project files, remember per-project path, open/edit files, rename, copy path, and delete through the Mac host. |
 | AI Stats | Ready | Shows current project and recent AI usage data forwarded by the Codux host. |
-| Updates | Ready | Checks the latest GitHub Release for `duxweb/codux-flutter`. |
+| Updates | Ready | Checks the latest `mobile-v*` release in `magalab/codux` that includes an Android APK. |
 
 ## Architecture
 
@@ -131,20 +131,19 @@ Supported levels:
 - `error`
 - `off`
 
-The default is `warn`. Release workflows build with `warn` unless overridden.
+The app defaults to `warn`; override it at build time when collecting diagnostics.
 
 ## Release
 
-The mobile source lives in this monorepo under `apps/mobile`. Mobile signing and public releases stay in the existing `duxweb/codux-flutter` repository so the existing Android and iOS signing secrets do not need to be moved:
+The mobile app is maintained and released from this repository under `apps/mobile`:
 
 - `CHANGELOG.md` and `CHANGELOG.zh-CN.md` keep versioned release notes.
 - `scripts/release/build-release-notes.sh` extracts bilingual release notes for GitHub Releases.
-- `duxweb/codux` is the source repository for desktop, shared crates, and mobile app code.
-- `duxweb/codux-flutter` is the mobile release repository. Its workflows build from the monorepo source and publish mobile GitHub Release / TestFlight artifacts with the existing mobile secrets.
+- `magalab/codux` is the source and release repository for desktop, shared crates, and mobile app code.
 
 ### Android Signing
 
-Published Android releases require these secrets in `duxweb/codux-flutter`:
+Signed Android releases require these secrets in the `magalab/codux` repository:
 
 - `CODUX_ANDROID_KEYSTORE_BASE64`
 - `CODUX_ANDROID_KEYSTORE_PASSWORD`
@@ -157,41 +156,22 @@ Generate the base64 value from a keystore:
 base64 -i codux-release.jks | pbcopy
 ```
 
-For local development without `android/key.properties`, release builds fall back to debug signing so `flutter run --release` still works. GitHub published releases use the signing secrets when configured and otherwise publish the same debug-signing fallback APK with a workflow warning.
-
-### iOS Signing
-
-TestFlight releases require these secrets in `duxweb/codux-flutter`:
-
-- `IOS_DISTRIBUTION_CERT_BASE64`
-- `IOS_DISTRIBUTION_CERT_PASSWORD`
-- `IOS_PROVISIONING_PROFILE_BASE64`
-- `APP_STORE_CONNECT_API_KEY_ID`
-- `APP_STORE_CONNECT_API_ISSUER_ID`
-- `APP_STORE_CONNECT_API_KEY_P8_BASE64`
+The Android release workflow requires all four secrets and fails if any are missing. Local release builds without `android/key.properties` use the debug key for development only.
 
 ### Publish A Version
 
 1. Add mobile notes under the target version in `apps/mobile/CHANGELOG.md` and `apps/mobile/CHANGELOG.zh-CN.md`.
-2. Update `pubspec.yaml` version if needed.
-3. Commit the release changes in `duxweb/codux`, then push `main` and the source tag:
+2. Set `apps/mobile/pubspec.yaml` to the same app version and increment its Android build number (for example, `2.0.3+55`). The workflow rejects tags whose version does not match `pubspec.yaml`.
+3. Commit and push the release changes. Push a `mobile-vX.Y.Z` tag to build and publish the signed APK independently of desktop releases:
 
 ```bash
 cd <codux-repo>
-git tag v0.1.4
 git push origin main
-git push origin v0.1.4
+git tag mobile-v2.0.3
+git push origin mobile-v2.0.3
 ```
 
-4. Push the same tag in `duxweb/codux-flutter` to trigger the mobile release workflows:
-
-```bash
-cd <codux-flutter-release-repo>
-git tag v0.1.4
-git push origin v0.1.4
-```
-
-The mobile release workflows in `duxweb/codux-flutter` build `apps/mobile` from the matching `duxweb/codux` tag, publish `Codux-Mobile-<version>-arm64-v8a-android.apk` and `SHA256SUMS.txt` to the mobile GitHub Release, and optionally upload the iOS IPA to TestFlight.
+The `Release Codux Mobile (Android)` workflow builds the ARM64 APK using the version and build number from `pubspec.yaml`, verifies its signature, writes a SHA-256 checksum, and publishes both to this repository's GitHub Release. You can also run it manually with an existing `mobile-vX.Y.Z` tag. The update checker only considers `mobile-v*` releases containing an `.apk` asset, so desktop releases do not appear as mobile updates.
 
 ## Repository Layout
 
@@ -200,7 +180,7 @@ The mobile release workflows in `duxweb/codux-flutter` build `apps/mobile` from 
 | `lib/` | Flutter app shell, relay client, screens, widgets, themes, and i18n. |
 | `plugin/codux_protocol_ffi/` | Rust protocol and terminal-core FFI used by Android, iOS, and desktop builds. |
 | `android/` | Android application wrapper and release signing config. |
-| `.github/workflows/` | Desktop release and formal macOS signing workflows for this monorepo. |
+| `.github/workflows/` | Desktop release, Android mobile release, and formal macOS signing workflows. |
 | `scripts/release/` | Release note extraction helpers. |
 | `docs/images/` | Reserved screenshot location. |
 
@@ -210,5 +190,5 @@ Codux Mobile is licensed under the GNU General Public License v3.0, the same lic
 
 ## Related Projects
 
-- [Codux for macOS](https://github.com/duxweb/codux)
-- [Codux Mobile Releases](https://github.com/duxweb/codux-flutter/releases)
+- [Codux for macOS](https://github.com/magalab/codux)
+- [Codux Mobile Releases](https://github.com/magalab/codux/releases)
