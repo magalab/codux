@@ -26,25 +26,16 @@ Use app-local commands only when working inside that app's native toolchain, suc
 
 ## Release Flow
 
-Codux uses this repository as the source-of-truth monorepo, but each shipped product is released by the repository that owns its distribution channel.
+This repository owns the source and release workflows for the desktop app, mobile app, and headless Agent.
 
-| Product | Source | Release repository | Trigger | Output |
-| --- | --- | --- | --- | --- |
-| Desktop | `apps/desktop` and shared `crates` | `duxweb/codux` | Push `vX.Y.Z` tag in this repository | Desktop GitHub Release assets, updater metadata, signed macOS follow-up workflow, Homebrew tap update |
-| Mobile | `apps/mobile` and shared `crates` | `duxweb/codux-flutter` | Push the same `vX.Y.Z` tag in the mobile release shell repository | Android APK release and iOS TestFlight upload; workflow checks out `duxweb/codux@vX.Y.Z` |
-| Service | `duxweb/codux-service` | `duxweb/codux-service` | Push `vX.Y.Z` tag in the service release repository | Linux/macOS service tarballs and GHCR Docker image |
+| Product | Release tag | Workflow | Output |
+| --- | --- | --- | --- |
+| Desktop + Agent | `vX.Y.Z` | `release-gpui.yml`, followed by the formal macOS workflow | Desktop installers, updater metadata, Agent binaries, and (for stable releases) Homebrew cask update |
+| Android | `mobile-vX.Y.Z` | `release-mobile-android.yml` | Signed Android APK attached to a GitHub Release |
 
-Release checklist:
+The release workflows publish to the GitHub repository that runs them. Set the required repository secrets before release: Tauri updater signing keys for updater artifacts; Apple signing/notarization credentials for formally signed macOS packages; Android signing credentials for APK releases. Homebrew publishing also requires a tap token.
 
-1. Update versions and changelogs in this repository.
-2. Run release validation from this repository, at minimum `cargo check -p codux`, `cargo test -p codux-runtime`, and `cd apps/mobile && flutter analyze`.
-3. Commit and push `main` in this repository.
-4. Create or move the source tag in this repository, then push it: `git tag vX.Y.Z && git push origin vX.Y.Z`.
-5. In the `duxweb/codux-flutter` release shell repository, push the same tag to trigger mobile release: `git tag vX.Y.Z && git push origin vX.Y.Z`.
-6. In the `duxweb/codux-service` release repository, push the service tag when a service release is needed: `git tag vX.Y.Z && git push origin vX.Y.Z`.
-7. Watch all three repositories' GitHub Actions. If a release shell workflow needs to be rerun without changing source, use `workflow_dispatch` with the same version so it checks out the monorepo tag again.
-
-Do not add mobile or service release workflows back into this repository unless their release repositories are intentionally retired. The release shell repositories exist so their existing signing secrets, store credentials, package ownership, GHCR publishing, and release history stay in the right place.
+Before tagging, update the changelog and mobile version as applicable, validate the target builds, and confirm the workflow run publishes assets to this repository. Desktop versions are applied from the `vX.Y.Z` tag by the release workflow. Android versions must match `apps/mobile/pubspec.yaml` and the `mobile-vX.Y.Z` tag.
 
 ## Ownership Rules
 

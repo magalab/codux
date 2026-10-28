@@ -13,8 +13,8 @@ use gpui_component::{Size, progress::Progress};
 /// Days the app must have been installed before the GitHub-star nudge auto-pops.
 const STAR_PROMPT_AFTER_DAYS: i64 = 3;
 
-const CODUX_WEBSITE_URL: &str = "https://codux.dux.cn";
-const CODUX_GITHUB_URL: &str = "https://github.com/duxweb/codux";
+const CODUX_WEBSITE_URL: &str = "https://github.com/magalab/codux";
+const CODUX_GITHUB_URL: &str = "https://github.com/magalab/codux";
 const CODUX_IDENTIFIER: &str = "com.duxweb.codux";
 const UPDATE_DIALOG_WIDTH: f32 = 440.0;
 const UPDATE_DIALOG_DEFAULT_HEIGHT: f32 = 210.0;

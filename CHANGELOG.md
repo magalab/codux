@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.0.4-beta.3] - 2026-10-28
+
+### Added
+
+- Added Redis database profiles for Agents, with credential-isolated access through `codux-db` and a read-only Redis command allowlist.
+
+### Changed
+
+- Set the fork repository as the default for desktop, Agent, installer, and Homebrew publishing, and migrate legacy updater endpoints to the fork.
+- Moved the Android release workflow into this repository, publishing APKs from `mobile-vX.Y.Z` tags.
+- Updated English and Chinese documentation download, installation, and feedback links to point to the fork.
+
+### Fixed
+
+- Fixed fork macOS release assets not being published correctly.
+
+
 ## [2.0.4-beta.2] - 2026-10-12
 
 ### Fixed

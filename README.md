@@ -10,34 +10,28 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/duxweb/codux/releases/latest"><img src="https://img.shields.io/github/v/release/duxweb/codux?label=release&color=blue" alt="Latest release"></a>
-  <a href="https://github.com/duxweb/codux/releases"><img src="https://img.shields.io/github/downloads/duxweb/codux/total?label=downloads&color=brightgreen" alt="Total downloads"></a>
+  <a href="https://github.com/magalab/codux/releases/latest"><img src="https://img.shields.io/github/v/release/magalab/codux?label=release&color=blue" alt="Latest release"></a>
+  <a href="https://github.com/magalab/codux/releases"><img src="https://img.shields.io/github/downloads/magalab/codux/total?label=downloads&color=brightgreen" alt="Total downloads"></a>
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-8250df" alt="Platform">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/duxweb/codux?color=orange" alt="License"></a>
-  <a href="https://github.com/duxweb/codux/stargazers"><img src="https://img.shields.io/github/stars/duxweb/codux?color=yellow" alt="GitHub stars"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/magalab/codux?color=orange" alt="License"></a>
+  <a href="https://github.com/magalab/codux/stargazers"><img src="https://img.shields.io/github/stars/magalab/codux?color=yellow" alt="GitHub stars"></a>
 </p>
 
 <p align="center">
-  <a href="https://codux.work">Website</a> &middot;
-  <a href="https://codux.work/getting-started/">Docs</a> &middot;
-  <a href="https://github.com/duxweb/codux/releases/latest">Download</a> &middot;
+  <a href="https://github.com/magalab/codux">Repository</a> &middot;
+  <a href="https://github.com/magalab/codux/releases/latest">Download</a> &middot;
   <a href="https://github.com/magalab/codux/releases">Mobile</a> &middot;
-  <a href="https://github.com/duxweb/codux/issues">Feedback</a>
+  <a href="https://github.com/magalab/codux/issues">Feedback</a>
 </p>
 
 <p align="center">
-  English | <a href="README.zh-CN.md">简体中文</a> | <a href="README.ja.md">日本語</a> | <a href="README.ko.md">한국어</a>
+  English | <a href="README.zh-CN.md">简体中文</a>
 </p>
 
 ---
 
 ![Codux](docs/images/screenshot.png)
 
-https://github.com/user-attachments/assets/cabf21a9-8649-4e65-9e8a-db27ccaccdf3
-
-<p align="center">
-  <a href="https://github.com/user-attachments/assets/cabf21a9-8649-4e65-9e8a-db27ccaccdf3">▶ Watch the demo</a>
-</p>
 
 ## Why Codux
 
@@ -62,7 +56,7 @@ Codux is **not** another editor. It's the control plane for developers who live 
 macOS — install with [Homebrew](https://brew.sh):
 
 ```bash
-brew install --cask duxweb/tap/codux
+brew install --cask magalab/tap/codux
 ```
 
 1. **Open a project.** Git worktrees, project state, and per-project sessions are picked up automatically.
@@ -152,16 +146,16 @@ Completely useless. Absolutely essential.
 macOS — install with [Homebrew](https://brew.sh):
 
 ```bash
-brew install --cask duxweb/tap/codux
+brew install --cask magalab/tap/codux
 ```
 
 Or download directly:
 
 | Platform | Download |
 | :--- | :--- |
-| macOS · Apple Silicon | [⬇ `codux-macos-aarch64.dmg`](https://github.com/duxweb/codux/releases/latest/download/codux-macos-aarch64.dmg) |
-| macOS · Intel | [⬇ `codux-macos-x86_64.dmg`](https://github.com/duxweb/codux/releases/latest/download/codux-macos-x86_64.dmg) |
-| Windows 11 · x64 | [⬇ `codux-windows-x86_64-setup.exe`](https://github.com/duxweb/codux/releases/latest/download/codux-windows-x86_64-setup.exe) |
+| macOS · Apple Silicon | [⬇ `codux-macos-aarch64.dmg`](https://github.com/magalab/codux/releases/latest/download/codux-macos-aarch64.dmg) |
+| macOS · Intel | [⬇ `codux-macos-x86_64.dmg`](https://github.com/magalab/codux/releases/latest/download/codux-macos-x86_64.dmg) |
+| Windows 11 · x64 | [⬇ `codux-windows-x86_64-setup.exe`](https://github.com/magalab/codux/releases/latest/download/codux-windows-x86_64-setup.exe) |
 
 Open the macOS `.dmg` and drag Codux to Applications; double-click the Windows installer. Then open a project, start your AI CLI, and go.
 
@@ -178,18 +172,18 @@ Download the Android APK from the [Codux GitHub Releases](https://github.com/mag
 macOS / Linux — one line (auto-detects OS/arch, installs as `codux` on your `PATH`):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/duxweb/codux/main/apps/agent/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/magalab/codux/main/apps/agent/scripts/install.sh | sh
 ```
 
 Flags: `--beta` · `--version <x.y.z>` · `--dir <path>` · `--setup` · `--mirror <prefix>` (if GitHub is slow where you are) · `--uninstall`. Or download the binary directly:
 
 | Platform | Download |
 | :--- | :--- |
-| macOS · Apple Silicon | [⬇ `codux-macos-aarch64`](https://github.com/duxweb/codux/releases/latest/download/codux-macos-aarch64) |
-| macOS · Intel | [⬇ `codux-macos-x86_64`](https://github.com/duxweb/codux/releases/latest/download/codux-macos-x86_64) |
-| Linux · arm64 | [⬇ `codux-linux-aarch64`](https://github.com/duxweb/codux/releases/latest/download/codux-linux-aarch64) |
-| Linux · x64 | [⬇ `codux-linux-x86_64`](https://github.com/duxweb/codux/releases/latest/download/codux-linux-x86_64) |
-| Windows · x64 | [⬇ `codux-windows-x86_64.exe`](https://github.com/duxweb/codux/releases/latest/download/codux-windows-x86_64.exe) |
+| macOS · Apple Silicon | [⬇ `codux-macos-aarch64`](https://github.com/magalab/codux/releases/latest/download/codux-macos-aarch64) |
+| macOS · Intel | [⬇ `codux-macos-x86_64`](https://github.com/magalab/codux/releases/latest/download/codux-macos-x86_64) |
+| Linux · arm64 | [⬇ `codux-linux-aarch64`](https://github.com/magalab/codux/releases/latest/download/codux-linux-aarch64) |
+| Linux · x64 | [⬇ `codux-linux-x86_64`](https://github.com/magalab/codux/releases/latest/download/codux-linux-x86_64) |
+| Windows · x64 | [⬇ `codux-windows-x86_64.exe`](https://github.com/magalab/codux/releases/latest/download/codux-windows-x86_64.exe) |
 
 Put the binary on your `PATH` as `codux`, then run `codux config` → `codux install` → `codux qrcode`.
 
@@ -248,7 +242,7 @@ Customize everything in **Settings → Shortcuts**.
 
 ## Feedback
 
-Found a bug or have a feature request? Open an [issue on GitHub](https://github.com/duxweb/codux/issues).
+Found a bug or have a feature request? Open an [issue on GitHub](https://github.com/magalab/codux/issues).
 
 For bug reports, use **Help → Export Diagnostics** and attach the generated `.zip` — it bundles runtime logs, rotated logs, performance summaries, saved app state, invalid-state backups, and matching macOS diagnostic reports when available.
 
@@ -259,37 +253,3 @@ Manual log paths:
 - `%APPDATA%\Codux\logs\runtime-rust.log`
 
 ---
-
-## Community Support
-
-Codux recognizes and supports the [LINUX DO](https://linux.do) community.
-
-## Contributors
-
-Thanks to everyone who has contributed code, issues, testing, and feedback to Codux.
-
-<p align="center">
-  <a href="https://github.com/duxweb/codux/graphs/contributors">
-    <img src="https://readme-contribs.as93.net/contributors/duxweb/codux" alt="Codux contributors">
-  </a>
-</p>
-
-## GitHub Star Trend
-
-If Codux ever rescued one of your long agent runs, a ⭐ helps more people find it.
-
-<a href="https://www.star-history.com/?repos=duxweb%2Fcodux&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=duxweb/codux&type=date&theme=dark&legend=top-left&sealed_token=hYXmcj_MIXkk4COkJV3llI2Vncn3-XEuwNNDVBZSDAnWmo3FHKZPS3sdLNsV5xv2SankP2QgPa7CX8vr6TvHzGolQTRk7sTLnTIM3sFHCIvUFOR_QPLWsA" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=duxweb/codux&type=date&legend=top-left&sealed_token=hYXmcj_MIXkk4COkJV3llI2Vncn3-XEuwNNDVBZSDAnWmo3FHKZPS3sdLNsV5xv2SankP2QgPa7CX8vr6TvHzGolQTRk7sTLnTIM3sFHCIvUFOR_QPLWsA" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=duxweb/codux&type=date&legend=top-left&sealed_token=hYXmcj_MIXkk4COkJV3llI2Vncn3-XEuwNNDVBZSDAnWmo3FHKZPS3sdLNsV5xv2SankP2QgPa7CX8vr6TvHzGolQTRk7sTLnTIM3sFHCIvUFOR_QPLWsA" />
- </picture>
-</a>
-
-<p align="center">
-  Wanted to be dmux, but that name was taken. So it's Codux now — which sounds like "Cool Dux" in Chinese.
-</p>
-
-<p align="center">
-  <a href="https://codux.work">codux.work</a>
-</p>

@@ -76,7 +76,7 @@ use self::{
     wsl::{SettingsWslPaneInput, settings_wsl_pane},
 };
 
-const CODUX_MOBILE_DOWNLOAD_URL: &str = "https://codux.dux.cn/features/mobile/";
+const CODUX_MOBILE_DOWNLOAD_URL: &str = "https://github.com/magalab/codux/releases";
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum SettingsPane {
     General,

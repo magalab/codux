@@ -4,6 +4,23 @@
 
 ## [Unreleased]
 
+## [2.0.4-beta.3] - 2026-10-28
+
+### 新增
+
+- Agent 数据库连接新增 Redis 支持，可通过凭证隔离的 `codux-db` wrapper 使用只读命令白名单访问 Redis。
+
+### 调整
+
+- 桌面端、Agent、安装器和 Homebrew 发布默认使用 `magalab/codux`，并将旧版上游更新地址迁移到 fork 更新通道。
+- Android 发布工作流移入当前仓库，通过 `mobile-vX.Y.Z` 标签发布 APK。
+- 更新中英文文档中的下载、安装和反馈入口，指向 fork 仓库。
+
+### 修复
+
+- 修复 fork 的 macOS Release 资产未正确发布的问题。
+
+
 ## [2.0.4-beta.2] - 2026-10-12
 
 ### 修复
