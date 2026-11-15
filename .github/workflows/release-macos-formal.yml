@@ -1,9 +1,6 @@
 name: Release macOS Formal
 
 on:
-  workflow_run:
-    workflows: ["Release GPUI Desktop"]
-    types: [completed]
   workflow_dispatch:
     inputs:
       tag:
@@ -31,7 +28,6 @@ env:
 
 jobs:
   metadata:
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && startsWith(github.event.workflow_run.head_branch, 'v')) }}
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.meta.outputs.version }}
@@ -42,10 +38,9 @@ jobs:
         id: ref
         shell: bash
         env:
-          DISPATCH_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || '' }}
-          WORKFLOW_TAG: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || '' }}
+          DISPATCH_TAG: ${{ inputs.tag }}
         run: |
-          source_ref="${DISPATCH_TAG:-$WORKFLOW_TAG}"
+          source_ref="$DISPATCH_TAG"
           echo "source_ref=$source_ref" >> "$GITHUB_OUTPUT"
 
       - name: Checkout
