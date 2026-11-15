@@ -30,7 +30,8 @@ try {
     caskPath,
   ]);
 
-  if (git(["diff", "--quiet", "--", "Casks/codux.rb"], { cwd: tapDir }).status === 0) {
+  run("git", ["add", "Casks/codux.rb"], { cwd: tapDir });
+  if (git(["diff", "--cached", "--quiet", "--", "Casks/codux.rb"], { cwd: tapDir }).status === 0) {
     console.log("[tap] cask already up to date");
     writeSummary("- Skipped: cask is already up to date.");
     process.exit(0);
