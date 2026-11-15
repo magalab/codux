@@ -12,8 +12,8 @@ const version = requiredEnv("RELEASE_VERSION").replace(/^v/, "");
 const token = requiredEnv("HOMEBREW_TAP_TOKEN");
 const artifactsDir = process.env.RELEASE_ARTIFACTS_DIR || path.join(root, "release-artifacts");
 const tapRepo = process.env.HOMEBREW_TAP_REPO || "magalab/homebrew-tap";
-const armDmgPath = findFormalDmg(artifactsDir, "aarch64");
-const intelDmgPath = findFormalDmg(artifactsDir, "x86_64");
+const armDmgPath = findDmg(artifactsDir, "aarch64");
+const intelDmgPath = findDmg(artifactsDir, "x86_64");
 const armSha256 = sha256File(armDmgPath);
 const intelSha256 = sha256File(intelDmgPath);
 const tapDir = fs.mkdtempSync(path.join(os.tmpdir(), "codux-homebrew-tap-"));
@@ -54,11 +54,11 @@ function requiredEnv(name) {
   return value;
 }
 
-function findFormalDmg(dir, arch) {
+function findDmg(dir, arch) {
   const files = walk(dir).filter((file) => file.endsWith(".dmg"));
-  const formal = files.find((file) => path.basename(file) === `codux-macos-${arch}.dmg`);
-  if (formal) return formal;
-  throw new Error(`Unable to find formal macOS ${arch} DMG in ${dir}`);
+  const dmg = files.find((file) => path.basename(file) === `codux-macos-${arch}.dmg`);
+  if (dmg) return dmg;
+  throw new Error(`Unable to find macOS ${arch} DMG in ${dir}`);
 }
 
 function walk(dir) {

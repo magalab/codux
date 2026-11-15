@@ -1,0 +1,54 @@
+name: Publish Homebrew Tap
+
+on:
+  workflow_run:
+    workflows: ["Release GPUI Desktop"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Published stable release tag, for example v2.0.4."
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  CODUX_RELEASE_REPOSITORY: ${{ github.repository }}
+
+jobs:
+  publish:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && startsWith(github.event.workflow_run.head_branch, 'v')) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Resolve stable version
+        id: version
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.event.workflow_run.head_branch }}
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Skipping non-stable tag: $RELEASE_TAG"
+            exit 0
+          fi
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+      - name: Download published DMGs
+        if: steps.version.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          gh release download "$RELEASE_TAG" --repo "$CODUX_RELEASE_REPOSITORY" --dir release-artifacts --pattern 'codux-macos-aarch64.dmg' --pattern 'codux-macos-x86_64.dmg'
+      - name: Publish Homebrew tap
+        if: steps.version.outputs.version != ''
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          HOMEBREW_TAP_REPO: ${{ vars.HOMEBREW_TAP_REPO || format('{0}/homebrew-tap', github.repository_owner) }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_ARTIFACTS_DIR: release-artifacts
+        run: node apps/desktop/scripts/release/publish-homebrew-cask.mjs
