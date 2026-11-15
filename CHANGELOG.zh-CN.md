@@ -4,6 +4,26 @@
 
 ## [Unreleased]
 
+## [2.0.4] - 2026-11-15
+
+### 新增
+
+- Agent 数据库连接新增 Redis 支持，可通过凭证隔离的 `codux-db` wrapper 使用只读命令白名单访问 Redis。
+
+### 调整
+
+- 桌面端、Agent、安装器和 Homebrew 发布默认使用 `magalab/codux`，并将旧版上游更新地址迁移到 fork 更新通道。
+- Android 发布工作流移入当前仓库，通过 `mobile-vX.Y.Z` 标签发布 APK。
+- 更新中英文文档中的下载、安装和反馈入口，指向 fork 仓库。
+
+### 修复
+
+- 修复 fork 的 macOS Release 资产未正确发布的问题。
+- 为 fork 发行渠道切换到独立的 Tauri updater 签名密钥，使 GitHub Actions 可以发布带签名的自动更新包。
+- 未配置可用的记忆提取 Provider 时暂停自动消费记忆队列，避免反复失败和 UI 刷新，同时保留待处理任务并在 Provider 可用后继续处理。
+- 发布、更新、WSL Runtime、Agent 安装脚本和 Homebrew 发布现在支持为 fork 及组织发行版配置仓库地址。
+- 更新 Homebrew Cask 生成器，使用不再弃用的 macOS 依赖写法。
+
 ## [2.0.4-beta.3] - 2026-10-28
 
 ### 新增

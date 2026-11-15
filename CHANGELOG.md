@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.0.4] - 2026-11-15
+
+### Added
+
+- Added Redis database profiles for Agents, with credential-isolated access through `codux-db` and a read-only Redis command allowlist.
+
+### Changed
+
+- Set the fork repository as the default for desktop, Agent, installer, and Homebrew publishing, and migrate legacy updater endpoints to the fork.
+- Moved the Android release workflow into this repository, publishing APKs from `mobile-vX.Y.Z` tags.
+- Updated English and Chinese documentation download, installation, and feedback links to point to the fork.
+
+### Fixed
+
+- Fixed fork macOS release assets not being published correctly.
+- Switched the fork release channel to its own Tauri updater signing key so GitHub Actions can publish signed automatic updates.
+- Paused automatic memory queue processing when no eligible extraction provider is configured, preventing repeated failures and UI refresh churn while preserving queued work until a provider becomes available.
+- Made release, update, WSL runtime, Agent installer, and Homebrew publishing repositories configurable for forks and organization-owned distributions.
+- Updated the Homebrew cask generator to use the non-deprecated macOS dependency syntax.
+
 ## [2.0.4-beta.3] - 2026-10-28
 
 ### Added
