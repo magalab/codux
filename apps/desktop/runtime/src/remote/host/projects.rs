@@ -30,7 +30,6 @@ impl RemoteHostRuntime {
             runtime_target: ProjectRuntimeTarget::Local,
         }) {
             Ok(baseline) => {
-                crate::runtime_state::note_pet_project_membership_change(&self.support_dir);
                 let project_id = baseline.selected_project_id.unwrap_or_default();
                 self.reply(
                     envelope,
@@ -71,7 +70,6 @@ impl RemoteHostRuntime {
             },
         ) {
             Ok(_) => {
-                crate::runtime_state::note_pet_project_membership_change(&self.support_dir);
                 self.reply(
                     envelope,
                     REMOTE_PROJECT_UPDATED,
@@ -90,7 +88,6 @@ impl RemoteHostRuntime {
         };
         match ProjectStore::new(self.support_dir.clone()).close_project(project_id) {
             Ok(_) => {
-                crate::runtime_state::note_pet_project_membership_change(&self.support_dir);
                 self.remove_project_state(project_id);
                 self.reply(
                     envelope,

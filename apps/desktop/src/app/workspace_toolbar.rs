@@ -2,7 +2,6 @@ use super::*;
 use crate::app::{
     ui_helpers::{titlebar_drag_area, with_codux_tooltip},
     workspace_daily_level::workspace_level_button,
-    workspace_pet_widgets::{WorkspacePetButtonInput, workspace_pet_button},
     workspace_shared::{
         workspace_header_badge_button_content, workspace_header_button, workspace_i18n,
     },
@@ -23,7 +22,7 @@ const WORKSPACE_WINDOW_CONTROLS_WIDTH: f32 = WORKSPACE_WINDOW_CONTROL_LEADING_MA
 impl CoduxApp {
     pub(in crate::app) fn workspace_toolbar(
         &self,
-        window: &mut Window,
+        _window: &mut Window,
         cx: &mut Context<Self>,
     ) -> impl IntoElement {
         let active_index = match self.workspace_view {
@@ -32,7 +31,6 @@ impl CoduxApp {
             WorkspaceView::Review => 2,
             WorkspaceView::Stats => 3,
         };
-        let pet_snapshot = self.pet_snapshot.clone();
         let has_project_context = self.state.selected_project.is_some();
         let remote_project_device_id = self
             .state
@@ -47,28 +45,6 @@ impl CoduxApp {
             });
         let show_server_info_button = has_project_context
             && (remote_project_device_id.is_none() || connected_remote_project_device_id.is_some());
-        let pet_button = if self.state.settings.pet_enabled {
-            if has_project_context {
-                workspace_pet_button(
-                    WorkspacePetButtonInput {
-                        pet: &self.state.pet,
-                        pet_snapshot: Some(&pet_snapshot),
-                        custom_pets: &self.pet_custom_pets,
-                        runtime_asset_root: &self.runtime.source_root,
-                        support_dir: &self.state.support_dir,
-                        language: &self.state.settings.language,
-                        pet_name_editing: self.pet_name_editing,
-                    },
-                    window,
-                    cx,
-                )
-                .into_any_element()
-            } else {
-                disabled_pet_button(&self.state, cx).into_any_element()
-            }
-        } else {
-            gpui::Empty.into_any_element()
-        };
         let level_button = if has_project_context {
             workspace_level_button(&self.state.daily_level, &self.state.settings.language, cx)
                 .into_any_element()
@@ -104,7 +80,6 @@ impl CoduxApp {
                         .flex()
                         .items_center()
                         .gap_2()
-                        .child(pet_button)
                         .child(level_button)
                         .child(workspace_toolbar_separator(cx))
                         .child(workspace_open_button(
@@ -520,26 +495,6 @@ fn workspace_toolbar_separator(cx: &mut Context<CoduxApp>) -> impl IntoElement {
         .h(px(16.0))
         .flex_none()
         .bg(theme::divider_for_surface(cx.theme().title_bar))
-}
-
-fn disabled_pet_button(state: &RuntimeState, cx: &mut Context<CoduxApp>) -> impl IntoElement {
-    let label = if state.pet.claimed {
-        format!("Lv.{}", state.pet.level.max(1))
-    } else {
-        workspace_i18n(&state.settings.language, "pet.claim.action", "Claim Pet")
-    };
-
-    workspace_header_button("workspace-pet-disabled", cx)
-        .secondary()
-        .disabled(true)
-        .opacity(0.45)
-        .text_color(cx.theme().foreground)
-        .child(workspace_header_badge_button_content(
-            HeroIconName::Heart,
-            color(theme::ACCENT),
-            label,
-            cx,
-        ))
 }
 
 fn disabled_level_button(language: &str, cx: &mut Context<CoduxApp>) -> impl IntoElement {

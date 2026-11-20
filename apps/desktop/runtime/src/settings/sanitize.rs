@@ -32,15 +32,6 @@ fn sanitize_ai_settings(mut ai: AISettings) -> AISettings {
         .memory
         .max_extraction_transcript_tokens
         .clamp(2000, 20000);
-    ai.pet.speech_mode = sanitize_pet_speech_mode(&ai.pet.speech_mode);
-    ai.pet.speech_frequency = sanitize_pet_speech_frequency(&ai.pet.speech_frequency);
-    ai.pet.speech_provider_id = sanitize_provider_reference(&ai.pet.speech_provider_id);
-    ai.pet.speech_quiet_hours_start = normalize_hour(ai.pet.speech_quiet_hours_start);
-    ai.pet.speech_quiet_hours_end = normalize_hour(ai.pet.speech_quiet_hours_end);
-    ai.pet.speech_temporary_mute_until = ai
-        .pet
-        .speech_temporary_mute_until
-        .filter(|timestamp| *timestamp > 0);
     ai.providers = ai
         .providers
         .into_iter()
@@ -60,15 +51,6 @@ fn sanitize_ai_settings(mut ai: AISettings) -> AISettings {
         })
     {
         ai.memory.default_extractor_provider_id = "automatic".to_string();
-    }
-    if ai.pet.speech_provider_id != "automatic"
-        && !ai.providers.iter().any(|provider| {
-            provider.id == ai.pet.speech_provider_id
-                && provider.is_enabled
-                && provider_supports_completion(&provider.kind)
-        })
-    {
-        ai.pet.speech_provider_id = "automatic".to_string();
     }
     if ai.git_commit_message_provider_id != "automatic"
         && ai.git_commit_message_provider_id != "off"
@@ -173,14 +155,6 @@ fn ai_memory_mut(raw: &mut Map<String, Value>) -> Result<&mut Map<String, Value>
         .ok_or_else(|| "AI memory settings are invalid.".to_string())
 }
 
-fn ai_pet_mut(raw: &mut Map<String, Value>) -> Result<&mut Map<String, Value>, String> {
-    let ai = ai_mut(raw)?;
-    ai.entry("pet".to_string())
-        .or_insert_with(|| Value::Object(Map::new()))
-        .as_object_mut()
-        .ok_or_else(|| "AI pet settings are invalid.".to_string())
-}
-
 fn ai_runtime_tools_mut(raw: &mut Map<String, Value>) -> Result<&mut Map<String, Value>, String> {
     let ai = ai_mut(raw)?;
     ai.entry("runtimeTools".to_string())
@@ -201,11 +175,4 @@ fn shortcuts_mut(raw: &mut Map<String, Value>) -> Result<&mut Map<String, Value>
         .or_insert_with(|| Value::Object(Map::new()))
         .as_object_mut()
         .ok_or_else(|| "Shortcut settings are invalid.".to_string())
-}
-
-fn pet_mut(raw: &mut Map<String, Value>) -> Result<&mut Map<String, Value>, String> {
-    raw.entry("pet".to_string())
-        .or_insert_with(|| Value::Object(Map::new()))
-        .as_object_mut()
-        .ok_or_else(|| "Pet settings are invalid.".to_string())
 }

@@ -64,16 +64,5 @@ pub fn provider_summary(provider: &MemoryProvider) -> String {
 }
 
 pub fn supports_completion(kind: &str) -> bool {
-    matches!(
-        kind,
-        "openai"
-            | "openAICompatible"
-            | "anthropic"
-            | "deepseek"
-            | "gemini"
-            | "groq"
-            | "openrouter"
-            | "ollama"
-            | "localLlama"
-    )
+    codux_llm::supports_completion(kind)
 }

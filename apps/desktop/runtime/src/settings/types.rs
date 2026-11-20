@@ -61,24 +61,7 @@ pub struct SettingsSummary {
     pub remote_cached_devices: usize,
     pub update_enabled: bool,
     pub update_channel: String,
-    pub pet_enabled: bool,
-    pub pet_desktop_widget: bool,
-    pub pet_static_mode: bool,
-    pub pet_reminders: bool,
-    pub pet_sedentary_reminders: bool,
-    pub pet_late_night_reminders: bool,
-    pub pet_hydration_reminder_minutes: String,
-    pub pet_sedentary_reminder_minutes: String,
-    pub pet_late_night_reminder_minutes: String,
-    pub pet_speech_mode: String,
-    pub pet_speech_frequency: String,
-    pub pet_speech_llm_enabled: bool,
-    pub pet_speech_provider_id: String,
-    pub pet_speech_quiet_during_work: bool,
-    pub pet_speech_louder_at_night: bool,
-    pub pet_speech_mute_on_fullscreen: bool,
-    pub pet_speech_quiet_hours_enabled: bool,
-    pub pet_speech_temporary_muted: bool,
+
     pub wsl_enabled: bool,
     pub developer_hud: bool,
     pub developer_refresh: String,
@@ -114,8 +97,6 @@ pub struct AISettings {
     pub git_commit_message_style_rules: String,
     #[serde(default)]
     pub memory: AIMemorySettings,
-    #[serde(default)]
-    pub pet: AIPetSettings,
     #[serde(default)]
     pub providers: Vec<AIProviderSettings>,
 }
@@ -163,31 +144,6 @@ pub struct AIMemorySettings {
     pub max_extraction_transcript_lines: i32,
     #[serde(default)]
     pub max_extraction_transcript_tokens: i32,
-}
-
-#[derive(Clone, Debug, Default, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AIPetSettings {
-    #[serde(default)]
-    pub speech_mode: String,
-    #[serde(default)]
-    pub speech_frequency: String,
-    #[serde(default)]
-    pub speech_llm_enabled: bool,
-    #[serde(default)]
-    pub speech_provider_id: String,
-    #[serde(default = "default_true")]
-    pub speech_quiet_during_work: bool,
-    #[serde(default)]
-    pub speech_louder_at_night: bool,
-    #[serde(default = "default_true")]
-    pub speech_mute_on_fullscreen: bool,
-    #[serde(default)]
-    pub speech_quiet_hours_start: Option<i32>,
-    #[serde(default)]
-    pub speech_quiet_hours_end: Option<i32>,
-    #[serde(default)]
-    pub speech_temporary_mute_until: Option<i64>,
 }
 
 #[derive(Clone, Debug, Deserialize)]

@@ -247,24 +247,6 @@ mod tests {
         assert_eq!(summary.theme_color, "Blue");
         assert_eq!(summary.icon_style, "default");
         assert!(summary.shows_dock_badge);
-        assert!(summary.pet_enabled);
-        assert!(!summary.pet_desktop_widget);
-        assert!(!summary.pet_static_mode);
-        assert!(!summary.pet_reminders);
-        assert!(!summary.pet_sedentary_reminders);
-        assert!(!summary.pet_late_night_reminders);
-        assert_eq!(summary.pet_hydration_reminder_minutes, "30");
-        assert_eq!(summary.pet_sedentary_reminder_minutes, "90");
-        assert_eq!(summary.pet_late_night_reminder_minutes, "120");
-        assert_eq!(summary.pet_speech_mode, "off");
-        assert_eq!(summary.pet_speech_frequency, "quiet");
-        assert!(!summary.pet_speech_llm_enabled);
-        assert_eq!(summary.pet_speech_provider_id, "api-openAICompatible-1");
-        assert!(summary.pet_speech_quiet_during_work);
-        assert!(!summary.pet_speech_louder_at_night);
-        assert!(summary.pet_speech_mute_on_fullscreen);
-        assert!(!summary.pet_speech_quiet_hours_enabled);
-        assert!(!summary.pet_speech_temporary_muted);
         assert_eq!(summary.terminal_font_family, "");
         assert_eq!(summary.terminal_font_size, "14");
         assert_eq!(summary.terminal_scrollback_lines, "500");
@@ -363,7 +345,10 @@ mod tests {
         let memory_number = SettingsService::new(support_dir.clone())
             .set_ai_memory_number("maxExtractionTranscriptTokens", "12000")
             .expect("set transcript token limit");
-        assert_eq!(memory_number.memory_max_extraction_transcript_tokens, "12000");
+        assert_eq!(
+            memory_number.memory_max_extraction_transcript_tokens,
+            "12000"
+        );
 
         let terminal_font = SettingsService::new(support_dir.clone())
             .cycle_terminal_font_size()
@@ -422,91 +407,6 @@ mod tests {
             .cycle_update_channel()
             .expect("cycle update channel");
         assert_eq!(update.update_channel, "beta");
-        let updated = fs::read_to_string(support_dir.join("settings.json")).expect("updated");
-        assert!(updated.contains("\"endpoint\": \"file:///tmp/latest.json\""));
-
-        let pet = SettingsService::new(support_dir.clone())
-            .toggle_pet_enabled()
-            .expect("toggle pet enabled");
-        assert!(!pet.pet_enabled);
-        let pet = SettingsService::new(support_dir.clone())
-            .toggle_pet_desktop_widget()
-            .expect("toggle desktop pet");
-        assert!(pet.pet_desktop_widget);
-        let pet = SettingsService::new(support_dir.clone())
-            .toggle_pet_static_mode()
-            .expect("toggle static pet");
-        assert!(pet.pet_static_mode);
-        let pet = SettingsService::new(support_dir.clone())
-            .toggle_pet_reminders()
-            .expect("toggle pet reminders");
-        assert!(pet.pet_reminders);
-        let pet = SettingsService::new(support_dir.clone())
-            .toggle_pet_sedentary_reminders()
-            .expect("toggle sedentary reminders");
-        assert!(pet.pet_sedentary_reminders);
-        let pet = SettingsService::new(support_dir.clone())
-            .toggle_pet_late_night_reminders()
-            .expect("toggle late-night reminders");
-        assert!(pet.pet_late_night_reminders);
-        let pet = SettingsService::new(support_dir.clone())
-            .set_pet_hydration_reminder_minutes("5")
-            .expect("set hydration reminder interval");
-        assert_eq!(pet.pet_hydration_reminder_minutes, "15");
-        let pet = SettingsService::new(support_dir.clone())
-            .set_pet_sedentary_reminder_minutes("180")
-            .expect("set sedentary reminder interval");
-        assert_eq!(pet.pet_sedentary_reminder_minutes, "180");
-        let pet = SettingsService::new(support_dir.clone())
-            .set_pet_late_night_reminder_minutes("999")
-            .expect("set late-night reminder interval");
-        assert_eq!(pet.pet_late_night_reminder_minutes, "240");
-        let summary = SettingsService::new(support_dir.clone()).summary();
-        assert_eq!(summary.pet_hydration_reminder_minutes, "15");
-        assert_eq!(summary.pet_sedentary_reminder_minutes, "180");
-        assert_eq!(summary.pet_late_night_reminder_minutes, "240");
-        let updated = fs::read_to_string(support_dir.join("settings.json")).expect("updated");
-        assert!(updated.contains("\"speechMode\": \"mixed\""));
-        assert!(updated.contains("\"speechFrequency\": \"normal\""));
-        assert!(updated.contains("\"customField\": \"keep-me\""));
-
-        let speech = SettingsService::new(support_dir.clone())
-            .cycle_pet_speech_mode()
-            .expect("cycle pet speech mode");
-        assert_eq!(speech.pet_speech_mode, "mixed");
-        let speech = SettingsService::new(support_dir.clone())
-            .cycle_pet_speech_frequency()
-            .expect("cycle pet speech frequency");
-        assert_eq!(speech.pet_speech_frequency, "normal");
-        let speech = SettingsService::new(support_dir.clone())
-            .toggle_pet_speech_llm_enabled()
-            .expect("toggle pet speech llm");
-        assert!(speech.pet_speech_llm_enabled);
-        let speech = SettingsService::new(support_dir.clone())
-            .toggle_pet_speech_quiet_during_work()
-            .expect("toggle pet quiet work");
-        assert!(!speech.pet_speech_quiet_during_work);
-        let speech = SettingsService::new(support_dir.clone())
-            .toggle_pet_speech_louder_at_night()
-            .expect("toggle pet night speech");
-        assert!(speech.pet_speech_louder_at_night);
-        let speech = SettingsService::new(support_dir.clone())
-            .toggle_pet_speech_mute_on_fullscreen()
-            .expect("toggle pet fullscreen mute");
-        assert!(!speech.pet_speech_mute_on_fullscreen);
-        let speech = SettingsService::new(support_dir.clone())
-            .toggle_pet_speech_quiet_hours()
-            .expect("toggle pet quiet hours");
-        assert!(speech.pet_speech_quiet_hours_enabled);
-        let speech = SettingsService::new(support_dir.clone())
-            .toggle_pet_speech_temporary_mute()
-            .expect("toggle pet temp mute");
-        assert!(speech.pet_speech_temporary_muted);
-        let updated = fs::read_to_string(support_dir.join("settings.json")).expect("updated");
-        assert!(updated.contains("\"speechProviderId\": \"api-openAICompatible-1\""));
-        assert!(updated.contains("\"customPetSpeechField\": \"preserve\""));
-        assert!(updated.contains("\"apiKey\": \"secret-value\""));
-
         let sleep = SettingsService::new(support_dir.clone())
             .set_sleep_mode("powerAdapterOnly")
             .expect("set sleep mode");
@@ -515,9 +415,7 @@ mod tests {
         let updated = fs::read_to_string(support_dir.join("settings.json")).expect("updated");
         let updated: serde_json::Value = serde_json::from_str(&updated).expect("updated json");
         assert_eq!(
-            updated
-                .get("sleepMode")
-                .and_then(|value| value.as_str()),
+            updated.get("sleepMode").and_then(|value| value.as_str()),
             Some("powerAdapterOnly")
         );
 
@@ -561,7 +459,11 @@ mod tests {
             assert!(!summary.shortcuts.contains_key(shortcut_id));
         }
 
-        assert!(service.set_shortcut("unsupported.shortcut", "Cmd+P").is_err());
+        assert!(
+            service
+                .set_shortcut("unsupported.shortcut", "Cmd+P")
+                .is_err()
+        );
         fs::remove_dir_all(support_dir).ok();
     }
 
@@ -594,7 +496,8 @@ mod tests {
         assert_eq!(summary.update_channel, "beta");
         crate::config::flush_all_config_writes();
         let updated = fs::read_to_string(support_dir.join("settings.json")).expect("updated");
-        let beta_endpoint = codux_runtime_core::release::github_raw_url("/updates/beta/latest.json");
+        let beta_endpoint =
+            codux_runtime_core::release::github_raw_url("/updates/beta/latest.json");
         assert!(updated.contains(&format!("\"endpoint\": \"{beta_endpoint}\"")));
 
         let summary = service
@@ -638,7 +541,8 @@ mod tests {
         assert_eq!(summary.update_channel, "beta");
         crate::config::flush_all_config_writes();
         let updated = fs::read_to_string(support_dir.join("settings.json")).expect("updated");
-        let beta_endpoint = codux_runtime_core::release::github_raw_url("/updates/beta/latest.json");
+        let beta_endpoint =
+            codux_runtime_core::release::github_raw_url("/updates/beta/latest.json");
         assert!(updated.contains(&format!("\"endpoint\": \"{beta_endpoint}\"")));
 
         fs::remove_dir_all(support_dir).ok();
@@ -812,21 +716,16 @@ mod tests {
             .expect("set codex model");
         assert_eq!(summary.runtime_tool_count, 9);
 
-        let summary = service
-            .set_codex_effort("xhigh")
-            .expect("set codex effort");
+        let summary = service.set_codex_effort("xhigh").expect("set codex effort");
         assert_eq!(summary.runtime_tool_count, 9);
 
-        let tool_permissions = crate::tool_permissions::ToolPermissionsService::new(support_dir.clone())
-            .summary();
+        let tool_permissions =
+            crate::tool_permissions::ToolPermissionsService::new(support_dir.clone()).summary();
         assert_eq!(tool_permissions.codex, "fullAccess");
         assert_eq!(tool_permissions.codex_model, "gpt-5.6");
         assert_eq!(tool_permissions.codex_effort, "xhigh");
         assert_eq!(tool_permissions.omp, "fullAccess");
-        assert_eq!(
-            tool_permissions.omp_model,
-            "anthropic/claude-sonnet-4-5"
-        );
+        assert_eq!(tool_permissions.omp_model, "anthropic/claude-sonnet-4-5");
 
         crate::config::flush_all_config_writes();
         let saved = fs::read_to_string(support_dir.join("settings.json")).expect("saved settings");
@@ -836,9 +735,18 @@ mod tests {
             .and_then(|value| value.get("runtimeTools"))
             .and_then(|value| value.as_object())
             .expect("runtime tools object");
-        assert_eq!(tools.get("codex").and_then(|value| value.as_str()), Some("fullAccess"));
-        assert_eq!(tools.get("codexModel").and_then(|value| value.as_str()), Some("gpt-5.6"));
-        assert_eq!(tools.get("codexEffort").and_then(|value| value.as_str()), Some("xhigh"));
+        assert_eq!(
+            tools.get("codex").and_then(|value| value.as_str()),
+            Some("fullAccess")
+        );
+        assert_eq!(
+            tools.get("codexModel").and_then(|value| value.as_str()),
+            Some("gpt-5.6")
+        );
+        assert_eq!(
+            tools.get("codexEffort").and_then(|value| value.as_str()),
+            Some("xhigh")
+        );
         assert_eq!(
             tools.get("omp").and_then(|value| value.as_str()),
             Some("fullAccess")
@@ -863,8 +771,8 @@ mod tests {
             .set_runtime_tool_permission("kimi", "fullAccess")
             .expect("set kimi permission");
 
-        let tool_permissions = crate::tool_permissions::ToolPermissionsService::new(support_dir.clone())
-            .sync();
+        let tool_permissions =
+            crate::tool_permissions::ToolPermissionsService::new(support_dir.clone()).sync();
         assert_eq!(tool_permissions.kiro, "default");
         assert_eq!(tool_permissions.kimi, "default");
 
@@ -876,8 +784,14 @@ mod tests {
             .and_then(|value| value.get("runtimeTools"))
             .and_then(|value| value.as_object())
             .expect("runtime tools object");
-        assert_eq!(tools.get("kiro").and_then(|value| value.as_str()), Some("default"));
-        assert_eq!(tools.get("kimi").and_then(|value| value.as_str()), Some("default"));
+        assert_eq!(
+            tools.get("kiro").and_then(|value| value.as_str()),
+            Some("default")
+        );
+        assert_eq!(
+            tools.get("kimi").and_then(|value| value.as_str()),
+            Some("default")
+        );
 
         fs::remove_dir_all(support_dir).ok();
     }

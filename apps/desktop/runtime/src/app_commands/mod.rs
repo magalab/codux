@@ -10,10 +10,6 @@ use crate::{
         DiagnosticsExportResult, UpdateInstallResult, UpdateStatus,
     },
     db::{DBProfileUpsertRequest, DBProfilesSnapshot, DBQueryResult},
-    desktop_pet::{
-        DesktopPetPhysicalPosition, DesktopPetPhysicalSize, DesktopPetPlacementSnapshot,
-        DesktopPetVisibilitySnapshot, DesktopPetWorkArea,
-    },
     git::{
         GitBranchRequest, GitBranchesSnapshot, GitCloneRequest, GitCommitActionRequest,
         GitCommitMessageContextSnapshot, GitCommitRefRequest, GitCommitRequest,
@@ -23,10 +19,7 @@ use crate::{
         GitReviewDiffRequest, GitReviewSnapshot, GitStatusSnapshot, GitSummary,
         GitWatchRegistration,
     },
-    llm::{
-        LLMCompletionRequest, LLMCompletionResponse, LLMProviderTestResult, PetIdleSpeechRequest,
-        PetIdleSpeechResponse,
-    },
+    llm::{LLMCompletionRequest, LLMCompletionResponse, LLMProviderTestResult},
     memory::{
         MemoryExtractionStatusSnapshot, MemoryManagementRequest, MemoryManagementSnapshot,
         MemoryManagerSnapshot, MemoryManagerSnapshotRequest, MemoryProjectMigrationRequest,
@@ -34,11 +27,6 @@ use crate::{
     },
     notification::{NotificationDispatchRequest, NotificationDispatchResult},
     performance::{PerformanceMonitor, PerformanceSnapshot},
-    pet::{
-        PetCatalog, PetClaimRequest, PetCustomPet, PetCustomPetInstallPreview,
-        PetCustomPetInstallRequest, PetRefreshRequest, PetRenameRequest, PetRestoreRequest,
-        PetSnapshot,
-    },
     power::PowerManager,
     project_activity::ProjectActivitySnapshot,
     project_open::{ProjectOpenApplicationRequest, ProjectOpenApplicationSummary},
@@ -66,7 +54,6 @@ mod files;
 mod git;
 mod memory;
 mod misc;
-mod pet;
 mod project;
 mod remote;
 mod worktree;
@@ -78,7 +65,7 @@ pub use files::*;
 pub use git::*;
 pub use memory::*;
 pub use misc::*;
-pub use pet::*;
+
 pub use project::*;
 pub use remote::*;
 pub use worktree::*;

@@ -183,7 +183,6 @@ impl RuntimeService {
         if result.is_ok() {
             self.remote_host
                 .broadcast_worktree_list_change(&project_id, &project_path);
-            self.sync_pet_project_memberships();
         }
         result
     }
@@ -212,7 +211,6 @@ impl RuntimeService {
         if result.is_ok() {
             self.remote_host
                 .broadcast_worktree_list_change(&project_id, &project_path);
-            self.sync_pet_project_memberships();
         }
         result
     }
@@ -243,9 +241,7 @@ impl RuntimeService {
         if result.is_ok() {
             self.remote_host
                 .broadcast_worktree_list_change(&project_id, &project_path);
-            if removes_worktree {
-                self.sync_pet_project_memberships();
-            }
+            if removes_worktree {}
         }
         result
     }
@@ -262,9 +258,8 @@ impl RuntimeService {
         project_id: &str,
         project_path: &str,
     ) -> Result<WorktreeSummary, String> {
-        let summary =
-            WorktreeService::new(self.support_dir.clone()).sync_from_git(project_id, project_path)?;
-        self.sync_pet_project_memberships();
+        let summary = WorktreeService::new(self.support_dir.clone())
+            .sync_from_git(project_id, project_path)?;
         Ok(summary)
     }
 
@@ -333,9 +328,8 @@ impl RuntimeService {
         project_id: &str,
         layout: TerminalLayoutSummary,
     ) -> Result<TerminalLayoutSummary, String> {
-        TerminalLayoutService::new(self.support_dir.clone()).save_from_gpui_with_grid(
-            project_id, layout,
-        )
+        TerminalLayoutService::new(self.support_dir.clone())
+            .save_from_gpui_with_grid(project_id, layout)
     }
 
     pub fn save_file_editor_layout(

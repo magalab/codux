@@ -64,11 +64,6 @@ fn project_update_marks_updated_project_active_and_rewatches_workspace() {
         .to_string(),
     )
     .expect("write state");
-    fs::write(
-        support_dir.join("pet-state.json"),
-        serde_json::to_vec(&crate::pet::PetSnapshot::default()).expect("encode empty pet"),
-    )
-    .expect("write pet state");
 
     let service = RuntimeService::new(PathBuf::from(&support_dir));
     service.app_runtime_ready(true, true);
@@ -170,10 +165,8 @@ fn project_select_worktree_marks_root_project_active_and_watches_worktree_worksp
 
 #[test]
 fn failed_file_watch_does_not_mark_path_active() {
-    let support_dir = std::env::temp_dir().join(format!(
-        "codux-failed-file-watch-{}",
-        uuid::Uuid::new_v4()
-    ));
+    let support_dir =
+        std::env::temp_dir().join(format!("codux-failed-file-watch-{}", uuid::Uuid::new_v4()));
     fs::create_dir_all(&support_dir).expect("create support dir");
     let service = RuntimeService::new(support_dir.clone());
     let generation = service.begin_project_watch_switch().unwrap();
@@ -477,10 +470,8 @@ fn cached_wsl_worktrees_do_not_start_the_hosted_runtime() {
     .expect("write state");
     let service = RuntimeService::new(support_dir.clone());
 
-    let summary = service.cached_worktrees_from_state(
-        Some("project-1"),
-        Some("/home/user/project"),
-    );
+    let summary =
+        service.cached_worktrees_from_state(Some("project-1"), Some("/home/user/project"));
 
     assert!(summary.available);
     assert!(summary.error.is_none());

@@ -162,10 +162,8 @@ impl CoduxApp {
         &self,
         keystroke: &gpui::Keystroke,
     ) -> bool {
-        !matches!(
-            self.window_mode,
-            AppWindowMode::Main | AppWindowMode::DesktopPet
-        ) && keystroke.key.eq_ignore_ascii_case("w")
+        !matches!(self.window_mode, AppWindowMode::Main)
+            && keystroke.key.eq_ignore_ascii_case("w")
             && keystroke.modifiers.platform
             && !keystroke.modifiers.control
             && !keystroke.modifiers.alt
@@ -179,15 +177,6 @@ impl CoduxApp {
         cx: &mut Context<Self>,
     ) -> bool {
         if self.handle_project_number_shortcut(event, window, cx) {
-            return true;
-        }
-
-        // Debug: ⌃⌥L replays the pet level-up celebration for visual tuning.
-        if event.keystroke.modifiers.control
-            && event.keystroke.modifiers.alt
-            && event.keystroke.key.eq_ignore_ascii_case("l")
-        {
-            self.preview_pet_level_up(cx);
             return true;
         }
 

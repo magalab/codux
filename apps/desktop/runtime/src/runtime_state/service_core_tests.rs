@@ -18,6 +18,5 @@ mod app_runtime_ready_tests {
     include!("service_core_tests/launch.rs");
     include!("service_core_tests/project_activation.rs");
     include!("service_core_tests/project_cleanup.rs");
-    include!("service_core_tests/pet_history.rs");
     include!("service_core_tests/system_remote.rs");
 }

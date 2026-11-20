@@ -23,11 +23,6 @@ use crate::{
         DBProfileUpsertRequest, DBProfilesSnapshot, DBQueryResult, DBService, DBStore, DBSummary,
         render_db_launch_context_from_support_dir,
     },
-    desktop_pet::{
-        DesktopPetHitLayout, DesktopPetPhysicalPosition, DesktopPetPhysicalSize,
-        DesktopPetPlacementSnapshot, DesktopPetSavedOrigin, DesktopPetService,
-        DesktopPetVisibilitySnapshot, DesktopPetWorkArea,
-    },
     dialog::{
         LocalizedAlertDialogRequest, LocalizedConfirmDialogRequest, LocalizedOpenDialogRequest,
         LocalizedSaveDialogRequest,
@@ -39,10 +34,7 @@ use crate::{
     },
     git,
     i18n::{self, I18nBundle},
-    llm::{
-        self, LLMCompletionRequest, LLMCompletionResponse, LLMProviderTestResult,
-        PetIdleSpeechRequest, PetIdleSpeechResponse,
-    },
+    llm::{self, LLMCompletionRequest, LLMCompletionResponse, LLMProviderTestResult},
     memory::{
         MemoryEnqueueResult, MemoryExtractionEnqueueResult, MemoryExtractionStatusSnapshot,
         MemoryManagementRequest, MemoryManagementSnapshot, MemoryManagerSnapshot,
@@ -55,11 +47,6 @@ use crate::{
         NotificationSummary,
     },
     performance::{PerformanceService, PerformanceSummary},
-    pet::{
-        PetCatalog, PetClaimInput, PetCustomPet, PetCustomPetInstallPreview,
-        PetCustomPetInstallRequest, PetProjectMembership, PetRefreshInput, PetRenameRequest,
-        PetRestoreRequest, PetService, PetSnapshot, PetStore, PetSummary, PetWorkspace,
-    },
     power::{PowerManager, PowerService, PowerSummary},
     project_activity::{ProjectActivityCoordinator, ProjectActivityEvent, ProjectActivitySnapshot},
     project_store::{

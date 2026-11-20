@@ -6,7 +6,7 @@ bundle.
 
 `locales.json` is only the manifest: it defines the supported locales and the
 compiled shard list. The actual strings live under `locales/*.json`, split by
-key prefix such as `common`, `git`, `settings`, and `pet`.
+key prefix such as `common`, `git`, `settings`, and `terminal`.
 
 When adding a new language key, edit the shard matching its prefix. If a new
 prefix is needed, add a new `locales/<prefix>.json`, register it in

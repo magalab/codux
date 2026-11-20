@@ -5,10 +5,6 @@ impl Render for CoduxApp {
         self.focus_root_if_needed(window, cx);
         self.ensure_appearance_sliders(cx);
 
-        if self.window_mode == AppWindowMode::DesktopPet {
-            return self.desktop_pet_window(window, cx).into_any_element();
-        }
-
         if self.window_mode == AppWindowMode::About {
             let root = div()
                 .size_full()
@@ -161,45 +157,6 @@ impl Render for CoduxApp {
                 .into_any_element();
         }
 
-        if self.window_mode == AppWindowMode::PetClaim {
-            let root = div()
-                .size_full()
-                .text_color(cx.theme().foreground)
-                .bg(cx.theme().background)
-                .on_key_down(cx.listener(Self::on_key_down))
-                .child(self.pet_claim_workspace(window, cx))
-                .child(self.codux_tooltip_layer(cx));
-            return self
-                .register_child_window_actions(root, cx)
-                .into_any_element();
-        }
-
-        if self.window_mode == AppWindowMode::PetCustomInstall {
-            let root = div()
-                .size_full()
-                .text_color(cx.theme().foreground)
-                .bg(cx.theme().background)
-                .on_key_down(cx.listener(Self::on_key_down))
-                .child(self.pet_custom_install_workspace(window, cx))
-                .child(self.codux_tooltip_layer(cx));
-            return self
-                .register_child_window_actions(root, cx)
-                .into_any_element();
-        }
-
-        if self.window_mode == AppWindowMode::PetDex {
-            let root = div()
-                .size_full()
-                .text_color(cx.theme().foreground)
-                .bg(cx.theme().background)
-                .on_key_down(cx.listener(Self::on_key_down))
-                .child(self.pet_dex_workspace(window, cx))
-                .child(self.codux_tooltip_layer(cx));
-            return self
-                .register_child_window_actions(root, cx)
-                .into_any_element();
-        }
-
         if self.window_mode == AppWindowMode::Settings {
             let root = div()
                 .size_full()
@@ -307,17 +264,6 @@ impl Render for CoduxApp {
             PROJECT_COLUMN_EXPANDED_WIDTH
         });
         let task_column_width = TASK_COLUMN_FIXED_WIDTH;
-
-        self.ensure_pet_level_up_ticker(cx);
-        self.ensure_pet_recalibration_ticker(cx);
-        let pet_level_up_overlay = self
-            .pet_level_up
-            .clone()
-            .map(|fx| self.pet_level_up_overlay(&fx, cx));
-        let pet_recalibration_overlay = self
-            .pet_recalibration
-            .clone()
-            .map(|fx| self.pet_recalibration_overlay(&fx, cx));
 
         let focus_handle = self.root_focus_handle(cx);
         if !self.main_window_close_handler_registered {
@@ -473,8 +419,6 @@ impl Render for CoduxApp {
                         ),
                 )
             })
-            .children(pet_level_up_overlay)
-            .children(pet_recalibration_overlay)
             .child(self.codux_tooltip_layer(cx))
             // Host gpui-component modal dialogs (e.g. the git Quick Pick) as a
             // centered overlay on top of the main window.

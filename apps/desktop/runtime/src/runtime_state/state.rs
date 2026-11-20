@@ -70,7 +70,6 @@ impl RuntimeState {
             &settings.statistics_mode,
         );
         let remote = load_remote(&support_dir);
-        let pet = load_pet(&support_dir);
         let power = PowerService::new().summary(&settings.sleep_mode);
         let performance = load_performance();
         let tool_permissions = load_tool_permissions(&support_dir);
@@ -103,7 +102,6 @@ impl RuntimeState {
             ai_runtime_state,
             remote_ai_current_sessions: Vec::new(),
             remote,
-            pet,
             power,
             performance,
             tool_permissions,
@@ -161,7 +159,6 @@ impl RuntimeState {
         self.ai_runtime_state = load_ai_runtime_state(&self.support_dir, &self.runtime_events);
         self.remote_ai_current_sessions.clear();
         self.refresh_ai_history_stats();
-        self.pet = load_pet(&self.support_dir);
         self.power = PowerService::new().summary(&self.settings.sleep_mode);
         self.performance = load_performance();
         self.tool_permissions = load_tool_permissions(&self.support_dir);

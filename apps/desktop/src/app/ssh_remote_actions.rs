@@ -1,9 +1,7 @@
 use super::ai_runtime_status::AgentLifecycleState;
 use super::project_actions::FilePickerOpenRequest;
 use super::*;
-use crate::app::app_events::{
-    ChildWindowUpdateEvent, current_memory_update_event, publish_pet_update,
-};
+use crate::app::app_events::{ChildWindowUpdateEvent, current_memory_update_event};
 
 enum RemoteRelayChange {
     Preset(String),
@@ -1229,12 +1227,7 @@ impl CoduxApp {
             self.apply_child_window_update_event(current_child_window_update_event(), cx);
         let project_events = self.runtime_service.drain_project_activity_events();
         let applied_project_events = self.apply_project_activity_events(project_events, cx);
-        let applied_pet_events =
-            usize::from(self.sync_pet_custom_install_event_for_activity_tick());
-        let applied_pet_update_events = usize::from(self.sync_pet_update_event_for_activity_tick());
         let ai_history_result = self.runtime_service.drain_ai_history_events();
-        let applied_runtime_pet_update =
-            self.apply_runtime_pet_refresh_result(&ai_history_result, cx);
         let applied_ai_history_events = self.apply_ai_history_events(ai_history_result.events, cx);
         let file_events = self.runtime_service.drain_file_change_events();
         let applied_file_events = self.apply_file_change_events(file_events, cx);
@@ -1317,12 +1310,6 @@ impl CoduxApp {
             if ai_activity_changed {
                 self.runtime_service.push_remote_ai_stats_to_watchers();
             }
-            let previous_level = self.state.pet.level;
-            self.state.pet = self.runtime_service.reload_pet();
-            self.note_pet_level_transition(previous_level);
-            if let Ok(snapshot) = self.runtime_service.pet_snapshot() {
-                self.pet_snapshot = snapshot;
-            }
         }
         self.maybe_refresh_git_for_agent_activity(terminal_status_changed, cx);
         let remote_ai_stats_changed = self.apply_pushed_remote_ai_stats();
@@ -1349,9 +1336,6 @@ impl CoduxApp {
         let changed = applied_project_events > 0
             || applied_file_events > 0
             || applied_ai_history_events > 0
-            || applied_pet_events > 0
-            || applied_pet_update_events > 0
-            || applied_runtime_pet_update
             || applied_settings_events > 0
             || child_window_events > 0
             || !remote_events.is_empty()
@@ -1369,15 +1353,12 @@ impl CoduxApp {
             self.runtime_trace(
                 "runtime-activity",
                 &format!(
-                    "tick scheduled={} settings={} child_windows={} project={} files={} pet_catalog={} pet_updates={} runtime_pet={} ai_history={} ai_events={} memory={} remote={} remote_layout={} scheduled_refresh={} ai_state_error={}",
+                    "tick scheduled={} settings={} child_windows={} project={} files={} ai_history={} ai_events={} memory={} remote={} remote_layout={} scheduled_refresh={} ai_state_error={}",
                     include_scheduled_tick,
                     applied_settings_events,
                     child_window_events,
                     applied_project_events,
                     applied_file_events,
-                    applied_pet_events,
-                    applied_pet_update_events,
-                    applied_runtime_pet_update,
                     applied_ai_history_events,
                     drained.events.len(),
                     drained.memory.len(),
@@ -1392,8 +1373,7 @@ impl CoduxApp {
             project_events: applied_project_events,
             file_events: applied_file_events,
             ai_history_events: applied_ai_history_events,
-            pet_events: applied_pet_events,
-            pet_update_events: applied_pet_update_events + usize::from(applied_runtime_pet_update),
+
             ai_activity_changed,
             memory_events: drained.memory.len(),
             dock_badge_count,
@@ -1533,12 +1513,6 @@ impl CoduxApp {
         );
         if ai_activity_changed {
             self.runtime_service.push_remote_ai_stats_to_watchers();
-        }
-        let previous_level = self.state.pet.level;
-        self.state.pet = self.runtime_service.reload_pet();
-        self.note_pet_level_transition(previous_level);
-        if let Ok(snapshot) = self.runtime_service.pet_snapshot() {
-            self.pet_snapshot = snapshot;
         }
 
         if !drained.memory.is_empty() || memory_update_event {
@@ -1682,42 +1656,6 @@ impl CoduxApp {
         }
         self.today_level_day_start = day_start;
         self.refresh_ai_global_history_summary(cx);
-        true
-    }
-
-    fn apply_runtime_pet_refresh_result(
-        &mut self,
-        result: &codux_runtime::runtime_state::AIHistoryDrainResult,
-        _cx: &mut Context<Self>,
-    ) -> bool {
-        if let Some(error) = result.pet_error.as_deref() {
-            self.runtime_trace(
-                "pet",
-                &format!("indexed_history_refresh failed error={error}"),
-            );
-        }
-        let Some(pet) = result.pet.clone() else {
-            return false;
-        };
-        let previous_level = self.state.pet.level;
-        let recalibrated = result.pet_snapshot.as_ref().is_some_and(|snapshot| {
-            self.pet_snapshot.experience_recalibration_pending
-                && !snapshot.experience_recalibration_pending
-        });
-        self.state.pet = pet;
-        if recalibrated {
-            self.pet_level_up = None;
-            self.note_pet_recalibration();
-        } else {
-            self.note_pet_level_transition(previous_level);
-        }
-        if let Some(snapshot) = result.pet_snapshot.clone() {
-            self.pet_snapshot = snapshot;
-        }
-        let revision = publish_pet_update();
-        if revision > 0 {
-            self.pet_update_seen_revision = revision;
-        }
         true
     }
 

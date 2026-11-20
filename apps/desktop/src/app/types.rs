@@ -43,16 +43,13 @@ pub(in crate::app) enum AppWindowMode {
     FileEditor,
     FilePreview,
     MemoryManager,
-    PetClaim,
-    PetCustomInstall,
-    PetDex,
+
     Settings,
     ProjectEditor,
     WorktreeCreator,
     SshProfileEditor,
     DbProfileEditor,
     FilePicker,
-    DesktopPet,
 }
 
 pub(in crate::app) struct TerminalTab {
@@ -151,11 +148,4 @@ impl MemoryManagerTab {
 pub(in crate::app) struct GitRunningOperation {
     pub(in crate::app) label: String,
     pub(in crate::app) cancellable: bool,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(in crate::app) enum PetDexSpotlight {
-    Bundled(String),
-    Custom(String),
-    ArchiveConfirm,
 }

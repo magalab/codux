@@ -4,10 +4,8 @@ fn summary_from_raw(raw: &Map<String, Value>) -> SettingsSummary {
     let memory = ai
         .and_then(|ai| ai.get("memory"))
         .and_then(Value::as_object);
-    let ai_pet = ai.and_then(|ai| ai.get("pet")).and_then(Value::as_object);
     let remote = raw.get("remote").and_then(Value::as_object);
     let update = raw.get("update").and_then(Value::as_object);
-    let pet = raw.get("pet").and_then(Value::as_object);
 
     SettingsSummary {
         language: string_value(raw, "language", defaults.language),
@@ -287,91 +285,6 @@ fn summary_from_raw(raw: &Map<String, Value>) -> SettingsSummary {
             .and_then(Value::as_str)
             .unwrap_or("stable")
             .to_string(),
-        pet_enabled: pet
-            .and_then(|pet| pet.get("enabled"))
-            .and_then(Value::as_bool)
-            .unwrap_or(defaults.pet_enabled),
-        pet_desktop_widget: pet
-            .and_then(|pet| pet.get("desktopWidget"))
-            .and_then(Value::as_bool)
-            .unwrap_or(defaults.pet_desktop_widget),
-        pet_static_mode: pet
-            .and_then(|pet| pet.get("staticMode"))
-            .and_then(Value::as_bool)
-            .unwrap_or(defaults.pet_static_mode),
-        pet_reminders: pet
-            .and_then(|pet| pet.get("reminders"))
-            .and_then(Value::as_bool)
-            .unwrap_or(defaults.pet_reminders),
-        pet_sedentary_reminders: pet
-            .and_then(|pet| pet.get("sedentaryReminders"))
-            .and_then(Value::as_bool)
-            .unwrap_or(defaults.pet_sedentary_reminders),
-        pet_late_night_reminders: pet
-            .and_then(|pet| pet.get("lateNightReminders"))
-            .and_then(Value::as_bool)
-            .unwrap_or(defaults.pet_late_night_reminders),
-        pet_hydration_reminder_minutes: pet
-            .and_then(|pet| pet.get("hydrationReminderMinutes"))
-            .and_then(Value::as_str)
-            .map(|value| numeric_string(value, 60, 15, 240).to_string())
-            .unwrap_or(defaults.pet_hydration_reminder_minutes),
-        pet_sedentary_reminder_minutes: pet
-            .and_then(|pet| pet.get("sedentaryReminderMinutes"))
-            .and_then(Value::as_str)
-            .map(|value| numeric_string(value, 60, 15, 240).to_string())
-            .unwrap_or(defaults.pet_sedentary_reminder_minutes),
-        pet_late_night_reminder_minutes: pet
-            .and_then(|pet| pet.get("lateNightReminderMinutes"))
-            .and_then(Value::as_str)
-            .map(|value| numeric_string(value, 60, 15, 240).to_string())
-            .unwrap_or(defaults.pet_late_night_reminder_minutes),
-        pet_speech_mode: ai_pet
-            .and_then(|pet| pet.get("speechMode"))
-            .and_then(Value::as_str)
-            .map(sanitize_pet_speech_mode)
-            .unwrap_or(defaults.pet_speech_mode),
-        pet_speech_frequency: ai_pet
-            .and_then(|pet| pet.get("speechFrequency"))
-            .and_then(Value::as_str)
-            .map(sanitize_pet_speech_frequency)
-            .unwrap_or(defaults.pet_speech_frequency),
-        pet_speech_llm_enabled: ai_pet
-            .and_then(|pet| pet.get("speechLlmEnabled"))
-            .and_then(Value::as_bool)
-            .unwrap_or(defaults.pet_speech_llm_enabled),
-        pet_speech_provider_id: ai_pet
-            .and_then(|pet| pet.get("speechProviderId"))
-            .and_then(Value::as_str)
-            .map(str::trim)
-            .filter(|value| !value.is_empty())
-            .map(str::to_string)
-            .unwrap_or(defaults.pet_speech_provider_id),
-        pet_speech_quiet_during_work: ai_pet
-            .and_then(|pet| pet.get("speechQuietDuringWork"))
-            .and_then(Value::as_bool)
-            .unwrap_or(defaults.pet_speech_quiet_during_work),
-        pet_speech_louder_at_night: ai_pet
-            .and_then(|pet| pet.get("speechLouderAtNight"))
-            .and_then(Value::as_bool)
-            .unwrap_or(defaults.pet_speech_louder_at_night),
-        pet_speech_mute_on_fullscreen: ai_pet
-            .and_then(|pet| pet.get("speechMuteOnFullscreen"))
-            .and_then(Value::as_bool)
-            .unwrap_or(defaults.pet_speech_mute_on_fullscreen),
-        pet_speech_quiet_hours_enabled: ai_pet
-            .and_then(|pet| pet.get("speechQuietHoursStart"))
-            .filter(|value| !value.is_null())
-            .is_some()
-            && ai_pet
-                .and_then(|pet| pet.get("speechQuietHoursEnd"))
-                .filter(|value| !value.is_null())
-                .is_some(),
-        pet_speech_temporary_muted: ai_pet
-            .and_then(|pet| pet.get("speechTemporaryMuteUntil"))
-            .and_then(Value::as_i64)
-            .map(|until| until > current_unix_seconds())
-            .unwrap_or(defaults.pet_speech_temporary_muted),
         wsl_enabled: raw
             .get("wslEnabled")
             .and_then(Value::as_bool)

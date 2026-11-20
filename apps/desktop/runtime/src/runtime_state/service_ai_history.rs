@@ -23,8 +23,9 @@ impl RuntimeService {
                     let state = service
                         .hosted_ai_history_runtime(&project.path)
                         .and_then(|runtime| {
-                            runtime
-                                .ok_or_else(|| "Hosted AI history runtime is unavailable".to_string())
+                            runtime.ok_or_else(|| {
+                                "Hosted AI history runtime is unavailable".to_string()
+                            })
                         })
                         .and_then(|runtime| runtime.refresh_state(&project))
                         .unwrap_or_else(|error| AIHistoryProjectState {
@@ -63,9 +64,7 @@ impl RuntimeService {
         self.ai_history_indexer.project_state(project)
     }
 
-    pub fn indexed_global_ai_history_summary(
-        &self,
-    ) -> Result<AIGlobalHistorySnapshot, String> {
+    pub fn indexed_global_ai_history_summary(&self) -> Result<AIGlobalHistorySnapshot, String> {
         self.ai_history_indexer
             .global_summary(self.ai_history_workspace_requests())
     }
@@ -117,44 +116,9 @@ impl RuntimeService {
         {
             let _ = self.refresh_indexed_global_ai_history();
         }
-        let should_refresh_pet = events.iter().any(|event| {
-            matches!(
-                event,
-                AIHistoryEvent::Global { .. }
-                    | AIHistoryEvent::Project { .. }
-                    | AIHistoryEvent::ProjectState {
-                        state: AIHistoryProjectState {
-                            is_loading: false,
-                            queued: false,
-                            error: None,
-                            snapshot: Some(_),
-                            ..
-                        },
-                    }
-            )
-        });
-        if !should_refresh_pet {
-            return AIHistoryDrainResult {
-                events,
-                ..Default::default()
-            };
-        }
-        match self.refresh_pet_from_indexed_history() {
-            Ok(pet) => {
-                let pet_snapshot = self.pet_snapshot().ok();
-                AIHistoryDrainResult {
-                    events,
-                    pet: Some(pet),
-                    pet_snapshot,
-                    pet_error: None,
-                }
-            }
-            Err(error) => AIHistoryDrainResult {
-                events,
-                pet: None,
-                pet_snapshot: None,
-                pet_error: Some(error),
-            },
+        AIHistoryDrainResult {
+            events,
+            ..Default::default()
         }
     }
 

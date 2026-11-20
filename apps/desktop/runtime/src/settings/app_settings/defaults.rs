@@ -6,39 +6,7 @@ pub(super) fn default_true() -> bool {
     true
 }
 
-pub(super) fn default_pet_speech_mode() -> String {
-    "mixed".to_string()
-}
-
-pub(super) fn default_pet_speech_frequency() -> String {
-    "normal".to_string()
-}
-
-pub(super) fn default_pet_hydration_reminder_minutes() -> String {
-    "60".to_string()
-}
-
-pub(super) fn default_pet_sedentary_reminder_minutes() -> String {
-    "60".to_string()
-}
-
-pub(super) fn default_pet_late_night_reminder_minutes() -> String {
-    "60".to_string()
-}
-
-pub(super) fn default_ai_pet_speech_mode() -> String {
-    "off".to_string()
-}
-
-pub(super) fn default_ai_pet_speech_frequency() -> String {
-    "normal".to_string()
-}
-
 pub(super) fn default_ai_memory_provider_id() -> String {
-    "automatic".to_string()
-}
-
-pub(super) fn default_ai_pet_provider_id() -> String {
     "automatic".to_string()
 }
 

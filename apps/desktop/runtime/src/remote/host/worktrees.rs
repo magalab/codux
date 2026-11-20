@@ -70,7 +70,6 @@ impl RemoteHostRuntime {
         };
         match WorktreeService::new(self.support_dir.clone()).create_from_request(request) {
             Ok(baseline) => {
-                crate::runtime_state::note_pet_project_membership_change(&self.support_dir);
                 let git = crate::git::GitService::status(&project_path);
                 self.reply_and_broadcast_resource_change(
                     envelope,
@@ -113,9 +112,7 @@ impl RemoteHostRuntime {
         let removes_worktree = request.remove_branch.unwrap_or(false);
         match WorktreeService::new(self.support_dir.clone()).merge_from_request(request) {
             Ok(baseline) => {
-                if removes_worktree {
-                    crate::runtime_state::note_pet_project_membership_change(&self.support_dir);
-                }
+                if removes_worktree {}
                 let git = crate::git::GitService::status(&project_path);
                 self.reply_and_broadcast_resource_change(
                     envelope,
@@ -153,7 +150,6 @@ impl RemoteHostRuntime {
         };
         match WorktreeService::new(self.support_dir.clone()).remove_from_request(request) {
             Ok(baseline) => {
-                crate::runtime_state::note_pet_project_membership_change(&self.support_dir);
                 let git = crate::git::GitService::status(&project_path);
                 self.reply_and_broadcast_resource_change(
                     envelope,

@@ -38,7 +38,6 @@ impl RuntimeService {
         if let Some(project_id) = snapshot.selected_project_id.as_deref() {
             let _ = self.mark_project_active_with_watch(project_id);
         }
-        self.sync_pet_project_memberships();
         Ok(snapshot)
     }
 
@@ -51,7 +50,6 @@ impl RuntimeService {
         if let Some(project_id) = snapshot.selected_project_id.as_deref() {
             let _ = self.mark_project_active_with_watch(project_id);
         }
-        self.sync_pet_project_memberships();
         Ok(snapshot)
     }
 
@@ -68,8 +66,8 @@ impl RuntimeService {
     ) -> Result<ProjectListSnapshot, String> {
         let project_id = request.project_id.clone();
         let workspace_ids = self.project_workspace_ids_for_root(&project_id);
-        let snapshot =
-            ProjectStore::new(self.support_dir.clone()).close_project_snapshot(project_id.clone())?;
+        let snapshot = ProjectStore::new(self.support_dir.clone())
+            .close_project_snapshot(project_id.clone())?;
         self.remote_host.remove_project_state(&project_id);
         self.cleanup_project_workspace_data(&workspace_ids);
         self.project_activity.remove_project(&project_id);
@@ -78,7 +76,6 @@ impl RuntimeService {
         } else {
             self.stop_active_project_watches();
         }
-        self.sync_pet_project_memberships();
         Ok(snapshot)
     }
 
@@ -128,16 +125,15 @@ impl RuntimeService {
     }
 
     pub fn create_or_select_project(&self, name: &str, path: &str) -> Result<String, String> {
-        let project_id = ProjectStore::new(self.support_dir.clone()).create_or_select_project(name, path)?;
+        let project_id =
+            ProjectStore::new(self.support_dir.clone()).create_or_select_project(name, path)?;
         self.mark_project_active_with_watch(&project_id)?;
-        self.sync_pet_project_memberships();
         Ok(project_id)
     }
 
     pub fn update_project(&self, project_id: &str, name: &str, path: &str) -> Result<(), String> {
         ProjectStore::new(self.support_dir.clone()).update_project(project_id, name, path)?;
         self.mark_project_active_with_watch(project_id)?;
-        self.sync_pet_project_memberships();
         Ok(())
     }
 
@@ -153,7 +149,8 @@ impl RuntimeService {
 
     pub fn close_project(&self, project_id: &str) -> Result<Option<String>, String> {
         let workspace_ids = self.project_workspace_ids_for_root(project_id);
-        let next_project_id = ProjectStore::new(self.support_dir.clone()).close_project(project_id)?;
+        let next_project_id =
+            ProjectStore::new(self.support_dir.clone()).close_project(project_id)?;
         self.remote_host.remove_project_state(project_id);
         self.cleanup_project_workspace_data(&workspace_ids);
         self.project_activity.remove_project(project_id);
@@ -162,7 +159,6 @@ impl RuntimeService {
         } else {
             self.stop_active_project_watches();
         }
-        self.sync_pet_project_memberships();
         Ok(next_project_id)
     }
 
@@ -172,10 +168,8 @@ impl RuntimeService {
         relative_path: &str,
     ) -> Result<(String, bool), String> {
         if let Some(runtime) = self.hosted_runtime_for_project_path(project_path) {
-            let absolute = crate::path::join_path(
-                project_path,
-                relative_path.trim_start_matches(['/', '\\']),
-            );
+            let absolute =
+                crate::path::join_path(project_path, relative_path.trim_start_matches(['/', '\\']));
             return match runtime.and_then(|runtime| runtime.read_file(&absolute)) {
                 Ok(payload) => Ok((
                     payload
@@ -216,9 +210,10 @@ impl RuntimeService {
 
         let terminal_layout = TerminalLayoutService::new(self.support_dir.clone());
         let file_editor_layout = FileEditorLayoutService::new(self.support_dir.clone());
-        let obsolete_cache =
-            crate::persistent_cache::PersistentCacheStore::for_support_dir(self.support_dir.clone())
-                .ok();
+        let obsolete_cache = crate::persistent_cache::PersistentCacheStore::for_support_dir(
+            self.support_dir.clone(),
+        )
+        .ok();
 
         for workspace_id in workspace_ids {
             let _ = terminal_layout.delete(workspace_id);

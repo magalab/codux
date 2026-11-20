@@ -79,11 +79,7 @@ impl CoduxApp {
             .map(|branch| branch.name.clone());
         let git_review = app_git_review(&state);
         let project_open_applications = Vec::new();
-        let pet_catalog = runtime_service.pet_catalog();
-        let pet_snapshot = runtime_service.pet_snapshot().unwrap_or_default();
-        let pet_custom_pets = pet_catalog.custom_pets.clone();
-        let pet_sprite_paths =
-            pet_sprite_path_cache(&runtime.source_root, &state.support_dir, &pet_catalog);
+
         Self {
             window_mode: AppWindowMode::Settings,
             root_focus_handle: None,
@@ -119,16 +115,14 @@ impl CoduxApp {
             toast_message: None,
             toast_revision: 0,
             pending_restart_language: None,
-            desktop_pet_window: None,
+
             settings_window: None,
             about_window: None,
             update_dialog_window: None,
             git_clone_window: None,
             git_credentials_window: None,
             memory_manager_window: None,
-            pet_claim_window: None,
-            pet_custom_install_window: None,
-            pet_dex_window: None,
+
             ssh_profile_editor_window: None,
             db_profile_editor_window: None,
             file_picker_window: None,
@@ -142,29 +136,7 @@ impl CoduxApp {
             child_windows: Vec::new(),
             parent_main_window: None,
             parent_main_window_handle: None,
-            desktop_pet_line: desktop_pet_fallback_line().to_string(),
-            desktop_pet_tone: DesktopPetActivityTone::Normal,
-            desktop_pet_plan_items: Vec::new(),
-            desktop_pet_terminal_statuses: Vec::new(),
-            desktop_pet_runtime_activity_active: false,
-            desktop_pet_main_window_fullscreen: false,
-            desktop_pet_active_llm_key: String::new(),
-            desktop_pet_requested_llm_key: String::new(),
-            desktop_pet_last_llm_requested_at: 0.0,
-            desktop_pet_llm_generation: 0,
-            desktop_pet_llm_in_flight: false,
-            desktop_pet_next_hydration_reminder_at: 0.0,
-            desktop_pet_next_sedentary_reminder_at: 0.0,
-            desktop_pet_next_late_night_reminder_at: 0.0,
-            desktop_pet_next_idle_llm_at: 0.0,
-            desktop_pet_line_visible_until: 0.0,
-            desktop_pet_line_hold_until: 0.0,
-            pet_sprite_frame: 0,
-            pet_sprite_animation_active: false,
-            pet_level_up: None,
-            pet_level_up_ticking: false,
-            pet_recalibration: None,
-            pet_recalibration_ticking: false,
+
             file_preview: "select a file to preview it".to_string(),
             file_preview_window_path: None,
             file_preview_window_content: String::new(),
@@ -223,24 +195,13 @@ impl CoduxApp {
             git_credential_retrying: false,
             git_commit_message: String::new(),
             git_commit_message_revision: 0,
-            pet_install_url: String::new(),
-            pet_install_display_name: String::new(),
-            pet_install_preview: None,
-            pet_install_error: None,
-            pet_install_previewing: false,
-            pet_installing: false,
-            pet_catalog,
-            pet_snapshot,
-            pet_custom_pets,
-            pet_sprite_paths,
+
             project_scroll_handle: UniformListScrollHandle::new(),
             task_scroll_handle: UniformListScrollHandle::new(),
             session_scroll_handle: UniformListScrollHandle::new(),
             ssh_scroll_handle: UniformListScrollHandle::new(),
             git_history_scroll_handle: VirtualListScrollHandle::new(),
-            pet_dex_scroll_handle: VirtualListScrollHandle::new(),
-            pet_custom_install_seen_revision: current_pet_custom_install_event().revision,
-            pet_update_seen_revision: current_pet_update_event().revision,
+
             settings_seen_revision: current_settings_update_event().revision,
             memory_seen_revision: current_memory_update_event().revision,
             child_window_update_seen_revision: current_child_window_update_event().revision,
@@ -253,9 +214,7 @@ impl CoduxApp {
             child_window_worktree_seen_revision: current_child_window_update_event()
                 .worktree_revision,
             child_window_git_seen_revision: current_child_window_update_event().git_revision,
-            pet_claim_species: String::new(),
-            pet_name_editing: false,
-            pet_dex_spotlight: None,
+
             selected_ai_session_id: None,
             ai_session_delete_confirm_id: None,
             selected_ai_provider_id,
@@ -791,29 +750,18 @@ impl CoduxApp {
     }
 
     pub(in crate::app) fn refresh_window_runtime_data(&mut self, cx: &mut Context<Self>) {
-        let refresh_pet = matches!(
-            self.window_mode,
-            AppWindowMode::Main
-                | AppWindowMode::Settings
-                | AppWindowMode::PetClaim
-                | AppWindowMode::PetCustomInstall
-                | AppWindowMode::PetDex
-                | AppWindowMode::DesktopPet
-        );
         let refresh_project_open = matches!(
             self.window_mode,
             AppWindowMode::Main | AppWindowMode::Settings | AppWindowMode::ProjectEditor
         );
-        if !refresh_pet && !refresh_project_open {
+        if !refresh_project_open {
             return;
         }
         self.runtime_trace(
             "window",
             &format!("runtime_data_refresh queued mode={:?}", self.window_mode),
         );
-        if refresh_pet {
-            self.refresh_pet_cache_async(cx);
-        }
+
         if !refresh_project_open {
             return;
         }
@@ -910,9 +858,6 @@ impl CoduxApp {
             &mut self.git_clone_window,
             &mut self.git_credentials_window,
             &mut self.memory_manager_window,
-            &mut self.pet_claim_window,
-            &mut self.pet_custom_install_window,
-            &mut self.pet_dex_window,
             &mut self.ssh_profile_editor_window,
             &mut self.project_editor_window,
             &mut self.worktree_creator_window,
@@ -936,9 +881,6 @@ impl CoduxApp {
             &mut self.git_clone_window,
             &mut self.git_credentials_window,
             &mut self.memory_manager_window,
-            &mut self.pet_claim_window,
-            &mut self.pet_custom_install_window,
-            &mut self.pet_dex_window,
             &mut self.ssh_profile_editor_window,
             &mut self.project_editor_window,
             &mut self.worktree_creator_window,

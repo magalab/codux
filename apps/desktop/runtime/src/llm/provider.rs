@@ -9,11 +9,11 @@ fn select_provider<'a>(
     if let Some(id) = requested
         && let Some(provider) = settings.providers.iter().find(|provider| {
             provider.id == id && provider.is_enabled && supports_completion(&provider.kind)
-        }) {
-            return Some(provider);
-        }
+        })
+    {
+        return Some(provider);
+    }
     let selector = match purpose {
-        "petSpeech" => settings.pet.speech_provider_id.as_str(),
         "memory" => settings.memory.default_extractor_provider_id.as_str(),
         "gitCommitMessage" => "automatic",
         _ => "automatic",
@@ -21,9 +21,10 @@ fn select_provider<'a>(
     if selector != "automatic"
         && let Some(provider) = settings.providers.iter().find(|provider| {
             provider.id == selector && provider.is_enabled && supports_completion(&provider.kind)
-        }) {
-            return Some(provider);
-        }
+        })
+    {
+        return Some(provider);
+    }
     settings
         .providers
         .iter()
@@ -66,27 +67,6 @@ fn sanitize_test_provider(mut provider: AIProviderSettings) -> Result<AIProvider
     Ok(provider)
 }
 
-fn fallback_model(provider: &AIProviderSettings, fallback: &str) -> String {
-    let model = provider.model.trim();
-    if model.is_empty() {
-        fallback.to_string()
-    } else {
-        model.to_string()
-    }
-}
-
-fn default_model_for_provider_kind(kind: &str) -> &'static str {
-    match kind {
-        "anthropic" => "claude-3-5-haiku-latest",
-        "deepseek" => "deepseek-chat",
-        "gemini" => "gemini-2.5-flash",
-        "groq" => "llama-3.3-70b-versatile",
-        "openrouter" => "openai/gpt-4.1-mini",
-        "ollama" | "localLlama" => "llama3.2",
-        _ => "gpt-4.1-mini",
-    }
-}
-
 fn sanitize_response_line(text: &str) -> String {
     text.replace(['\r', '\n'], " ")
         .split_whitespace()
@@ -96,13 +76,4 @@ fn sanitize_response_line(text: &str) -> String {
         .chars()
         .take(500)
         .collect()
-}
-
-fn normalized_non_empty(value: &str) -> Option<String> {
-    let trimmed = value.trim();
-    if trimmed.is_empty() {
-        None
-    } else {
-        Some(trimmed.to_string())
-    }
 }

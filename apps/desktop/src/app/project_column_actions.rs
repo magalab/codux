@@ -153,14 +153,6 @@ impl CoduxApp {
             .collect()
     }
 
-    pub(in crate::app) fn visible_pet_sprite_frame(&self, frame_count: usize) -> usize {
-        if self.state.settings.pet_static_mode {
-            0
-        } else {
-            self.pet_sprite_frame % frame_count.max(1)
-        }
-    }
-
     pub(super) fn project_column_view(
         &mut self,
         cx: &mut Context<Self>,

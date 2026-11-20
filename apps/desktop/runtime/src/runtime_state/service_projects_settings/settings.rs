@@ -22,7 +22,8 @@ impl RuntimeService {
         apply: impl FnOnce(&mut AppSettings),
     ) -> Result<AppSettings, String> {
         let previous = AppSettingsStore::from_support_dir(self.support_dir.clone()).snapshot();
-        let settings = AppSettingsStore::from_support_dir(self.support_dir.clone()).update(apply)?;
+        let settings =
+            AppSettingsStore::from_support_dir(self.support_dir.clone()).update(apply)?;
         self.sync_app_settings_side_effects(&previous, &settings)?;
         Ok(settings)
     }
@@ -135,7 +136,6 @@ impl RuntimeService {
         self.update_settings_with_side_effects(|settings| settings.set_window_opacity(percent))
     }
 
-
     pub fn toggle_dock_badge(&self) -> Result<SettingsSummary, String> {
         self.update_settings_with_side_effects(|settings| settings.toggle_dock_badge())
     }
@@ -210,113 +210,6 @@ impl RuntimeService {
         })
     }
 
-    pub fn toggle_pet_enabled(&self) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| settings.toggle_pet_enabled())
-    }
-
-    pub fn toggle_pet_desktop_widget(&self) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| settings.toggle_pet_desktop_widget())
-    }
-
-    pub fn toggle_pet_static_mode(&self) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| settings.toggle_pet_static_mode())
-    }
-
-    pub fn toggle_pet_reminders(&self) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| settings.toggle_pet_reminders())
-    }
-
-    pub fn toggle_pet_sedentary_reminders(&self) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| settings.toggle_pet_sedentary_reminders())
-    }
-
-    pub fn toggle_pet_late_night_reminders(&self) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| settings.toggle_pet_late_night_reminders())
-    }
-
-    pub fn set_pet_hydration_reminder_minutes(
-        &self,
-        minutes: &str,
-    ) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| {
-            settings.set_pet_hydration_reminder_minutes(minutes)
-        })
-    }
-
-    pub fn set_pet_sedentary_reminder_minutes(
-        &self,
-        minutes: &str,
-    ) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| {
-            settings.set_pet_sedentary_reminder_minutes(minutes)
-        })
-    }
-
-    pub fn set_pet_late_night_reminder_minutes(
-        &self,
-        minutes: &str,
-    ) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| {
-            settings.set_pet_late_night_reminder_minutes(minutes)
-        })
-    }
-
-    pub fn cycle_pet_speech_mode(&self) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| settings.cycle_pet_speech_mode())
-    }
-
-    pub fn set_pet_speech_mode(&self, mode: &str) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| settings.set_pet_speech_mode(mode))
-    }
-
-    pub fn cycle_pet_speech_frequency(&self) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| settings.cycle_pet_speech_frequency())
-    }
-
-    pub fn set_pet_speech_frequency(&self, frequency: &str) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| {
-            settings.set_pet_speech_frequency(frequency)
-        })
-    }
-
-    pub fn toggle_pet_speech_llm_enabled(&self) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| settings.toggle_pet_speech_llm_enabled())
-    }
-
-    pub fn toggle_pet_speech_quiet_during_work(&self) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| {
-            settings.toggle_pet_speech_quiet_during_work()
-        })
-    }
-
-    pub fn toggle_pet_speech_louder_at_night(&self) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| {
-            settings.toggle_pet_speech_louder_at_night()
-        })
-    }
-
-    pub fn toggle_pet_speech_mute_on_fullscreen(&self) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| {
-            settings.toggle_pet_speech_mute_on_fullscreen()
-        })
-    }
-
-    pub fn toggle_pet_speech_quiet_hours(&self) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| settings.toggle_pet_speech_quiet_hours())
-    }
-
-    pub fn toggle_pet_speech_temporary_mute(&self) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| {
-            settings.toggle_pet_speech_temporary_mute()
-        })
-    }
-
-    pub fn set_pet_speech_temporary_mute(&self, muted: bool) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| {
-            settings.set_pet_speech_temporary_mute(muted)
-        })
-    }
-
     pub fn cycle_update_channel(&self) -> Result<SettingsSummary, String> {
         self.update_settings_with_side_effects(|settings| settings.cycle_update_channel())
     }
@@ -361,12 +254,6 @@ impl RuntimeService {
 
     pub fn test_ai_provider(&self, provider_id: &str) -> Result<LLMProviderTestResult, String> {
         SettingsService::new(self.support_dir.clone()).test_ai_provider(provider_id)
-    }
-
-    pub fn set_pet_speech_provider(&self, provider_id: &str) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| {
-            settings.set_pet_speech_provider(provider_id)
-        })
     }
 
     pub fn set_ai_global_prompt(&self, prompt: &str) -> Result<SettingsSummary, String> {
@@ -444,6 +331,8 @@ impl RuntimeService {
     }
 
     pub fn set_git_commit_language(&self, language: &str) -> Result<SettingsSummary, String> {
-        self.update_settings_with_side_effects(|settings| settings.set_git_commit_language(language))
+        self.update_settings_with_side_effects(|settings| {
+            settings.set_git_commit_language(language)
+        })
     }
 }

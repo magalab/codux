@@ -57,10 +57,6 @@ const I18N_SHARDS: &[(&str, &str)] = &[
         include_str!("../../runtime-assets/i18n/locales/performance.json"),
     ),
     (
-        "locales/pet.json",
-        include_str!("../../runtime-assets/i18n/locales/pet.json"),
-    ),
-    (
         "locales/project.json",
         include_str!("../../runtime-assets/i18n/locales/project.json"),
     ),

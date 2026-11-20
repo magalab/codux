@@ -125,14 +125,6 @@ Any controller — a **desktop** or a **phone** — can connect to any host — 
 - **Headless host.** Run `codux` on a server, spare Mac, or Linux box and drive its terminals, Git, and AI as if they were local. See [`apps/agent/README.md`](apps/agent/README.md).
 - **Session continuity.** Reconnect to the same running shells and agent sessions after disconnects.
 
-## Your Terminal Pet
-
-Every token your agents burn feeds a pixel pet that lives in your workspace. Hatch it, name it, and watch it level up as you code — its five stats (Wisdom, Chaos, Night, Stamina, Empathy) grow out of how, and when, you actually work. Install custom sprite pets, or retire old companions into your hall of fame.
-
-Completely useless. Absolutely essential.
-
-<p align="center"><img src="docs/images/pet.png" width="320" alt="Codux terminal pet"></p>
-
 ## Local-First by Design
 
 - **Your data stays yours.** Projects, terminals, sessions, memory, token stats, and credentials live on your machines — there is no Codux cloud and no account to sign up for.

@@ -28,31 +28,6 @@ impl SettingsService {
         Ok(summary_from_raw(&raw))
     }
 
-    fn toggle_pet_bool(&self, key: &str, default: bool) -> Result<SettingsSummary, String> {
-        let mut raw = self.raw_settings();
-        let pet = pet_mut(&mut raw)?;
-        let current = pet.get(key).and_then(Value::as_bool).unwrap_or(default);
-        pet.insert(key.to_string(), Value::Bool(!current));
-        self.save_raw_settings(&raw)?;
-        Ok(summary_from_raw(&raw))
-    }
-
-    fn update_pet_string(&self, key: &str, value: String) -> Result<SettingsSummary, String> {
-        let mut raw = self.raw_settings();
-        let pet = pet_mut(&mut raw)?;
-        pet.insert(key.to_string(), Value::String(value));
-        self.save_raw_settings(&raw)?;
-        Ok(summary_from_raw(&raw))
-    }
-
-    fn update_ai_pet_string(&self, key: &str, value: String) -> Result<SettingsSummary, String> {
-        let mut raw = self.raw_settings();
-        let pet = ai_pet_mut(&mut raw)?;
-        pet.insert(key.to_string(), Value::String(value));
-        self.save_raw_settings(&raw)?;
-        Ok(summary_from_raw(&raw))
-    }
-
     fn update_runtime_tool_string(
         &self,
         key: &str,
@@ -61,15 +36,6 @@ impl SettingsService {
         let mut raw = self.raw_settings();
         let tools = ai_runtime_tools_mut(&mut raw)?;
         tools.insert(key.to_string(), Value::String(value));
-        self.save_raw_settings(&raw)?;
-        Ok(summary_from_raw(&raw))
-    }
-
-    fn toggle_ai_pet_bool(&self, key: &str, default: bool) -> Result<SettingsSummary, String> {
-        let mut raw = self.raw_settings();
-        let pet = ai_pet_mut(&mut raw)?;
-        let current = pet.get(key).and_then(Value::as_bool).unwrap_or(default);
-        pet.insert(key.to_string(), Value::Bool(!current));
         self.save_raw_settings(&raw)?;
         Ok(summary_from_raw(&raw))
     }

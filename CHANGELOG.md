@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.0.5-beta.1] - 2026-11-20
+
+### Removed
+
+- Removed the pet system, including desktop companions, pet progression, speech and reminders, custom pet installation, settings, and bundled sprite assets.
+
+### Fixed
+
+- Use the shared provider capability check for memory extraction so supported providers are not excluded by a separate allowlist.
+
 ## [2.0.4] - 2026-11-15
 
 ### Added

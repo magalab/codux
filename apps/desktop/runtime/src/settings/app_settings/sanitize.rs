@@ -6,15 +6,6 @@ pub(super) fn sanitize_settings(mut settings: AppSettings) -> AppSettings {
         settings.language = default_language();
     }
     settings.ai = sanitize_ai_settings(settings.ai);
-    settings.pet.speech_mode =
-        sanitize_pet_speech_mode(&settings.pet.speech_mode, &default_pet_speech_mode());
-    settings.pet.speech_frequency = sanitize_pet_speech_frequency(&settings.pet.speech_frequency);
-    settings.pet.hydration_reminder_minutes =
-        sanitize_pet_reminder_minutes(&settings.pet.hydration_reminder_minutes, 60);
-    settings.pet.sedentary_reminder_minutes =
-        sanitize_pet_reminder_minutes(&settings.pet.sedentary_reminder_minutes, 60);
-    settings.pet.late_night_reminder_minutes =
-        sanitize_pet_reminder_minutes(&settings.pet.late_night_reminder_minutes, 60);
     if settings.sleep_mode.trim().is_empty() {
         settings.sleep_mode = default_sleep_mode();
     }
@@ -138,17 +129,6 @@ fn sanitize_ai_settings(mut ai: AISettings) -> AISettings {
         &ai.memory.default_extractor_provider_id,
         &default_ai_memory_provider_id(),
     );
-    ai.pet.speech_mode =
-        sanitize_pet_speech_mode(&ai.pet.speech_mode, &default_ai_pet_speech_mode());
-    ai.pet.speech_frequency = sanitize_pet_speech_frequency(&ai.pet.speech_frequency);
-    ai.pet.speech_provider_id =
-        sanitize_provider_selector(&ai.pet.speech_provider_id, &default_ai_pet_provider_id());
-    ai.pet.speech_quiet_hours_start = normalize_hour(ai.pet.speech_quiet_hours_start);
-    ai.pet.speech_quiet_hours_end = normalize_hour(ai.pet.speech_quiet_hours_end);
-    ai.pet.speech_temporary_mute_until = ai
-        .pet
-        .speech_temporary_mute_until
-        .filter(|timestamp| *timestamp > 0);
 
     ai.providers = ai
         .providers
@@ -169,15 +149,6 @@ fn sanitize_ai_settings(mut ai: AISettings) -> AISettings {
         })
     {
         ai.memory.default_extractor_provider_id = default_ai_memory_provider_id();
-    }
-    if ai.pet.speech_provider_id != default_ai_pet_provider_id()
-        && !ai.providers.iter().any(|provider| {
-            provider.id == ai.pet.speech_provider_id
-                && provider.is_enabled
-                && provider_supports_completion(&provider.kind)
-        })
-    {
-        ai.pet.speech_provider_id = default_ai_pet_provider_id();
     }
     if ai.git_commit_message_provider_id != default_git_commit_message_provider_id()
         && ai.git_commit_message_provider_id != "off"
@@ -301,43 +272,6 @@ fn provider_supports_completion(kind: &str) -> bool {
             | "ollama"
             | "localLlama"
     )
-}
-
-fn sanitize_pet_speech_mode(value: &str, fallback: &str) -> String {
-    match value.trim() {
-        "off" => "off".to_string(),
-        "encourage" => "encourage".to_string(),
-        "roast" => "roast".to_string(),
-        "flirty" => "flirty".to_string(),
-        "chuunibyou" => "chuunibyou".to_string(),
-        "mixed" => "mixed".to_string(),
-        _ => fallback.to_string(),
-    }
-}
-
-fn sanitize_pet_speech_frequency(value: &str) -> String {
-    match value.trim() {
-        "quiet" => "quiet".to_string(),
-        "lively" => "lively".to_string(),
-        "chatterbox" => "chatterbox".to_string(),
-        _ => "normal".to_string(),
-    }
-}
-
-fn sanitize_pet_reminder_minutes(value: &str, default: i64) -> String {
-    value
-        .trim()
-        .parse::<f64>()
-        .ok()
-        .filter(|value| value.is_finite())
-        .map(|value| value.round() as i64)
-        .unwrap_or(default)
-        .clamp(15, 240)
-        .to_string()
-}
-
-fn normalize_hour(hour: Option<i32>) -> Option<i32> {
-    hour.map(|value| value.clamp(0, 23))
 }
 
 fn sanitize_provider_selector(value: &str, automatic: &str) -> String {

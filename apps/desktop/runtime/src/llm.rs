@@ -1,10 +1,8 @@
 use crate::{
     runtime_trace::runtime_trace,
-    settings::{AIProviderSettings, AISettings, locale_from_language_setting},
+    settings::{AIProviderSettings, AISettings},
 };
-use chrono::{Local, Timelike};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 #[cfg(test)]
 mod tests;
@@ -18,4 +16,3 @@ pub(crate) fn install_llm_trace_hook() {
 include!("llm/types.rs");
 include!("llm/provider.rs");
 include!("llm/completion.rs");
-include!("llm/pet_speech.rs");

@@ -22,8 +22,6 @@ pub struct AppSettings {
     #[serde(default = "default_true")]
     pub shows_dock_badge: bool,
     #[serde(default)]
-    pub pet: PetSettings,
-    #[serde(default)]
     pub ai: AISettings,
     #[serde(default = "default_sleep_mode")]
     pub sleep_mode: String,
@@ -84,33 +82,6 @@ pub struct UpdateSettings {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct PetSettings {
-    #[serde(default = "default_true")]
-    pub enabled: bool,
-    #[serde(default)]
-    pub desktop_widget: bool,
-    #[serde(default)]
-    pub static_mode: bool,
-    #[serde(default)]
-    pub reminders: bool,
-    #[serde(default)]
-    pub sedentary_reminders: bool,
-    #[serde(default)]
-    pub late_night_reminders: bool,
-    #[serde(default = "default_pet_hydration_reminder_minutes")]
-    pub hydration_reminder_minutes: String,
-    #[serde(default = "default_pet_sedentary_reminder_minutes")]
-    pub sedentary_reminder_minutes: String,
-    #[serde(default = "default_pet_late_night_reminder_minutes")]
-    pub late_night_reminder_minutes: String,
-    #[serde(default = "default_pet_speech_mode")]
-    pub speech_mode: String,
-    #[serde(default = "default_pet_speech_frequency")]
-    pub speech_frequency: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct AISettings {
     #[serde(default)]
     pub global_prompt: String,
@@ -126,8 +97,6 @@ pub struct AISettings {
     pub runtime_tools: AIRuntimeToolSettings,
     #[serde(default)]
     pub memory: AIMemorySettings,
-    #[serde(default)]
-    pub pet: AIPetSettings,
     #[serde(default)]
     pub providers: Vec<AIProviderSettings>,
 }
@@ -218,31 +187,6 @@ pub struct AIMemorySettings {
     pub max_extraction_transcript_lines: i32,
     #[serde(default = "default_memory_max_extraction_transcript_tokens")]
     pub max_extraction_transcript_tokens: i32,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AIPetSettings {
-    #[serde(default = "default_ai_pet_speech_mode")]
-    pub speech_mode: String,
-    #[serde(default = "default_ai_pet_speech_frequency")]
-    pub speech_frequency: String,
-    #[serde(default)]
-    pub speech_llm_enabled: bool,
-    #[serde(default = "default_ai_pet_provider_id")]
-    pub speech_provider_id: String,
-    #[serde(default = "default_true")]
-    pub speech_quiet_during_work: bool,
-    #[serde(default)]
-    pub speech_louder_at_night: bool,
-    #[serde(default = "default_true")]
-    pub speech_mute_on_fullscreen: bool,
-    #[serde(default)]
-    pub speech_quiet_hours_start: Option<i32>,
-    #[serde(default)]
-    pub speech_quiet_hours_end: Option<i32>,
-    #[serde(default)]
-    pub speech_temporary_mute_until: Option<i64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

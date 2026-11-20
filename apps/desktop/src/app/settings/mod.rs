@@ -50,8 +50,6 @@ mod git;
 mod memory;
 #[path = "panes/notifications.rs"]
 mod notifications;
-#[path = "panes/pet.rs"]
-mod pet;
 #[path = "panes/remote/mod.rs"]
 mod remote;
 #[path = "panes/shortcuts.rs"]
@@ -67,7 +65,6 @@ use self::{
     git::settings_git_pane,
     memory::settings_memory_pane,
     notifications::settings_notifications_pane,
-    pet::settings_pet_pane,
     remote::{
         SettingsRemotePaneInput, remote_connect_overlay, remote_pairing_overlay,
         remote_pending_pairing_overlay, settings_remote_pane,
@@ -81,7 +78,6 @@ const CODUX_MOBILE_DOWNLOAD_URL: &str = "https://github.com/magalab/codux/releas
 pub(super) enum SettingsPane {
     General,
     Appearance,
-    Pet,
     AI,
     Git,
     Memory,
@@ -97,7 +93,6 @@ impl SettingsPane {
         let key = match self {
             Self::General => "settings.tab.general",
             Self::Appearance => "settings.tab.appearance",
-            Self::Pet => "settings.tab.pet",
             Self::AI => "settings.tab.ai",
             Self::Git => "settings.tab.git",
             Self::Memory => "settings.tab.memory",
@@ -110,7 +105,6 @@ impl SettingsPane {
         match self {
             Self::General => settings_text(language, key, "General"),
             Self::Appearance => settings_text(language, key, "Appearance"),
-            Self::Pet => settings_text(language, key, "Pet"),
             Self::AI => settings_text(language, key, "AI"),
             Self::Git => settings_text(language, key, "Git"),
             Self::Memory => settings_text(language, key, "Memory"),
@@ -126,7 +120,6 @@ impl SettingsPane {
         match self {
             Self::General => HeroIconName::Cog6Tooth,
             Self::Appearance => HeroIconName::Swatch,
-            Self::Pet => HeroIconName::Heart,
             Self::AI => HeroIconName::CpuChip,
             Self::Git => HeroIconName::ArrowPathRoundedSquare,
             Self::Memory => HeroIconName::BookOpen,
@@ -143,10 +136,9 @@ impl SettingsPane {
     }
 }
 
-const SETTINGS_PANES: [SettingsPane; 11] = [
+const SETTINGS_PANES: [SettingsPane; 10] = [
     SettingsPane::General,
     SettingsPane::Appearance,
-    SettingsPane::Pet,
     SettingsPane::AI,
     SettingsPane::Git,
     SettingsPane::Memory,
@@ -398,7 +390,6 @@ fn settings_pane_body(
             window,
             cx,
         ),
-        SettingsPane::Pet => settings_pet_pane(&app.state.settings, window, cx),
         SettingsPane::AI => settings_ai_pane(
             &app.state.settings,
             &app.state.tool_permissions,

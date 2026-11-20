@@ -38,7 +38,6 @@ impl AgentWorktreeHost for DesktopAgentWorktreeHost {
                 task_title: Some(request.name.clone()),
             },
         )?;
-        crate::runtime_state::note_pet_project_membership_change(&runtime.support_dir);
         runtime.broadcast_worktree_list_change(&scope.root_project_id, &scope.root_project_path);
         runtime.push_event(RemoteHostEvent::WorktreesChanged {
             project_id: scope.root_project_id.clone(),
@@ -183,7 +182,6 @@ impl AgentWorktreeHost for DesktopAgentWorktreeHost {
         WorktreeService::new(runtime.support_dir.clone())
             .sync_from_git(&scope.root_project_id, &scope.root_project_path)?;
         TerminalLayoutService::new(runtime.support_dir.clone()).delete(&layout_key)?;
-        crate::runtime_state::note_pet_project_membership_change(&runtime.support_dir);
         runtime.broadcast_worktree_list_change(&scope.root_project_id, &scope.root_project_path);
         runtime.push_event(RemoteHostEvent::WorktreesChanged {
             project_id: scope.root_project_id.clone(),

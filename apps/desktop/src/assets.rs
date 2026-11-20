@@ -9,7 +9,6 @@ use std::borrow::Cow;
 #[include = "fonts/**/*"]
 #[include = "heroicons/**/*.svg"]
 #[include = "icons/**/*"]
-#[include = "pets/**/*"]
 #[include = "rank-icons/**/*.svg"]
 struct RuntimeAssets;
 

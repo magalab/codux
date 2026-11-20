@@ -8,12 +8,6 @@ use codux_runtime::{
     ai_history::{AIHistorySummary, AISessionForkRequest, AISessionForkTarget, AISessionSummary},
     ai_history_indexer::AIHistoryEvent,
     db::{DBConnectionProfile, DBProfileSummary, DBProfileUpsertRequest, DBSummary},
-    desktop_pet::{
-        DESKTOP_PET_BASE_HEIGHT, DESKTOP_PET_BASE_WIDTH, DESKTOP_PET_HIDE, DESKTOP_PET_MUTE_1_HOUR,
-        DESKTOP_PET_MUTE_30_MINUTES, DESKTOP_PET_MUTE_TODAY, DESKTOP_PET_SKIP_LINE,
-        DESKTOP_PET_SPEAK_LESS, DESKTOP_PET_SPEAK_MORE, DesktopPetSavedOrigin, DesktopPetSide,
-        DesktopPetWorkArea,
-    },
     dialog::{
         LocalizedAlertDialogRequest, LocalizedConfirmDialogRequest, LocalizedOpenDialogRequest,
     },
@@ -31,10 +25,6 @@ use codux_runtime::{
     },
     notification::{NotificationChannelConfig, NotificationDispatchRequest},
     performance::{PerformanceService, PerformanceSummary},
-    pet::{
-        PetCatalog, PetClaimRequest, PetCustomPet, PetCustomPetInstallPreview,
-        PetCustomPetInstallRequest, PetRenameRequest, PetRestoreRequest, PetSnapshot, PetSummary,
-    },
     project_activity::ProjectActivityEvent,
     project_open::ProjectOpenApplicationSummary,
     project_store::{
@@ -66,12 +56,12 @@ use codux_runtime::{
 };
 use gpui::{
     AnyElement, AnyWindowHandle, App, AppContext, Bounds, ClipboardItem, Context, ElementId,
-    FocusHandle, FontWeight, ImageSource, InteractiveElement, IntoElement, KeyDownEvent, Length,
-    MouseButton, ObjectFit, ParentElement, PathBuilder, Pixels, Render, ScrollHandle, SharedString,
+    FocusHandle, FontWeight, InteractiveElement, IntoElement, KeyDownEvent, Length, MouseButton,
+    ObjectFit, ParentElement, PathBuilder, Pixels, Render, ScrollHandle, SharedString,
     StatefulInteractiveElement, Styled, StyledImage, Subscription, UniformListScrollHandle, Window,
-    WindowAppearance, WindowBackgroundAppearance, WindowBounds, WindowControlArea, WindowKind,
-    WindowOptions, canvas, div, img, linear_color_stop, linear_gradient, point,
-    prelude::FluentBuilder as _, px, relative, rems, size,
+    WindowAppearance, WindowBounds, WindowControlArea, WindowOptions, canvas, div, img,
+    linear_color_stop, linear_gradient, point, prelude::FluentBuilder as _, px, relative, rems,
+    size,
 };
 use gpui_component::{
     ActiveTheme, Disableable, ElementExt, Icon, Root, Sizable, Size, VirtualListScrollHandle,
@@ -108,15 +98,12 @@ mod app_select;
 mod app_state;
 mod db_actions;
 mod db_profile_editor;
-mod desktop_pet;
 mod file_actions;
 mod file_editor;
 mod formatting;
 mod git_actions;
 pub(crate) mod macos_window;
 pub(crate) mod native_menu;
-mod pet;
-mod pet_actions;
 mod project_actions;
 mod project_column;
 mod project_column_actions;
@@ -149,7 +136,6 @@ mod work_scheduler;
 mod workspace;
 mod workspace_daily_level;
 mod workspace_files;
-mod workspace_pet_widgets;
 mod workspace_review;
 mod workspace_shared;
 mod workspace_stats;
@@ -180,10 +166,9 @@ use self::{
         normalized_global_ai_history_snapshot_to_summary,
     },
     app_events::{
-        ChildWindowUpdateKind, PetCustomInstallEvent, current_child_window_update_event,
-        current_pet_custom_install_event, current_pet_update_event, current_settings_update_event,
-        publish_child_window_update, publish_pet_custom_install, publish_pet_update,
-        publish_settings_update, publish_ssh_update, publish_statistics_settings_update,
+        ChildWindowUpdateKind, current_child_window_update_event, current_settings_update_event,
+        publish_child_window_update, publish_settings_update, publish_ssh_update,
+        publish_statistics_settings_update,
     },
     app_helpers::{
         PROJECT_BADGE_COLORS, defer_codux_app_update, generated_git_branch_name,
@@ -193,20 +178,16 @@ use self::{
     },
     app_state::{
         AIProviderTestResult, DBProfileTestDisplay, GIT_CREDENTIALS_COMPACT_HEIGHT,
-        GIT_CREDENTIALS_WINDOW_WIDTH, GitOperationCompletion, PET_CUSTOM_INSTALL_ERROR_HEIGHT,
-        PET_CUSTOM_INSTALL_INPUT_HEIGHT, PET_CUSTOM_INSTALL_READY_HEIGHT,
-        PET_CUSTOM_INSTALL_WINDOW_WIDTH, PET_DEX_FRAME_INTERVAL, PendingTerminalClose,
+        GIT_CREDENTIALS_WINDOW_WIDTH, GitOperationCompletion, PendingTerminalClose,
         ProjectEnvironmentVariableDraft, ProjectSwitchLoad, ProjectSwitchPrimaryLoad,
         ProjectSwitchTaskLoad, ProjectSwitchTerminalLoad, RuntimeActivityTickResult,
         RuntimeScheduledRefresh, SSHProfileTestDisplay, TerminalCloseTarget, UpdateDialogPhase,
         WorktreeScopeKey, WorktreeSidebarLoad, WorktreeSwitchLoad, app_git_review, app_now_seconds,
         current_worktree_scope_key, git_status_tree_key, project_environment_variable_drafts,
-        resize_git_credentials_window, resize_pet_custom_install_window,
-        resize_pet_custom_install_window_handle, settings_with_active_restart_locked_values,
+        resize_git_credentials_window, settings_with_active_restart_locked_values,
         worktree_summary_has_rows, worktree_terminal_storage_key,
     },
     db_profile_editor::db_profile_editor_workspace,
-    desktop_pet::*,
     formatting::compact_number,
     project_column::{ProjectColumnView, ProjectListState},
     scroll_compat::{ScrollableElement, codux_uniform_list},

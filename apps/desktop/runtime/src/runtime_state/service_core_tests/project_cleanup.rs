@@ -1,77 +1,4 @@
 #[test]
-fn project_close_closes_pet_membership() {
-    let support_dir = std::env::temp_dir().join(format!(
-        "codux-project-close-pet-baseline-{}",
-        uuid::Uuid::new_v4()
-    ));
-    let first_dir = support_dir.join("first");
-    let second_dir = support_dir.join("second");
-    fs::create_dir_all(&first_dir).expect("create first project dir");
-    fs::create_dir_all(&second_dir).expect("create second project dir");
-    fs::write(
-        support_dir.join("state.json"),
-        json!({
-            "projects": [
-                {
-                    "id": "project-1",
-                    "name": "First",
-                    "path": first_dir.to_string_lossy()
-                },
-                {
-                    "id": "project-2",
-                    "name": "Second",
-                    "path": second_dir.to_string_lossy()
-                }
-            ],
-            "selectedProjectId": "project-1"
-        })
-        .to_string(),
-    )
-    .expect("write state");
-    let pet_snapshot = crate::pet::PetSnapshot {
-        claimed_at: Some(1),
-        species: "codux".to_string(),
-        memberships: vec![
-            crate::pet::PetProjectMembership {
-                project_path: codux_runtime_core::path::normalize_local_path(&first_dir),
-                included_at: 1,
-                excluded_at: None,
-            },
-            crate::pet::PetProjectMembership {
-                project_path: codux_runtime_core::path::normalize_local_path(&second_dir),
-                included_at: 1,
-                excluded_at: None,
-            },
-        ],
-        ..crate::pet::PetSnapshot::default()
-    };
-    fs::write(
-        support_dir.join("pet-state.json"),
-        serde_json::to_vec(&pet_snapshot).expect("encode pet"),
-    )
-    .expect("write pet state");
-
-    let service = RuntimeService::new(PathBuf::from(&support_dir));
-
-    service
-        .project_close(crate::project_store::ProjectCloseRequest {
-            project_id: "project-1".to_string(),
-        })
-        .expect("close first project");
-    let pet = service.pet_snapshot().expect("pet snapshot after close");
-    assert!(pet.memberships.iter().any(|membership| {
-        membership.project_path == codux_runtime_core::path::normalize_local_path(&first_dir)
-            && membership.excluded_at.is_some()
-    }));
-    assert!(pet.memberships.iter().any(|membership| {
-        membership.project_path == codux_runtime_core::path::normalize_local_path(&second_dir)
-            && membership.excluded_at.is_none()
-    }));
-
-    let _ = fs::remove_dir_all(support_dir);
-}
-
-#[test]
 fn project_close_cleans_workspace_cache_for_root_and_worktrees() {
     let support_dir = std::env::temp_dir().join(format!(
         "codux-project-close-workspace-cache-{}",
@@ -171,29 +98,6 @@ fn project_close_cleans_workspace_cache_for_root_and_worktrees() {
         )
         .expect("save obsolete git ui state");
 
-    let pet_snapshot = crate::pet::PetSnapshot {
-        claimed_at: Some(1),
-        species: "codux".to_string(),
-        memberships: vec![
-            crate::pet::PetProjectMembership {
-                project_path: codux_runtime_core::path::normalize_local_path(&project_dir),
-                included_at: 1,
-                excluded_at: None,
-            },
-            crate::pet::PetProjectMembership {
-                project_path: codux_runtime_core::path::normalize_local_path(&worktree_dir),
-                included_at: 1,
-                excluded_at: None,
-            },
-        ],
-        ..crate::pet::PetSnapshot::default()
-    };
-    fs::write(
-        support_dir.join("pet-state.json"),
-        serde_json::to_vec(&pet_snapshot).expect("encode pet"),
-    )
-    .expect("write pet state");
-
     service
         .project_close(ProjectCloseRequest {
             project_id: "project-1".to_string(),
@@ -226,15 +130,6 @@ fn project_close_cleans_workspace_cache_for_root_and_worktrees() {
             .expect("load obsolete git ui state"),
         None
     );
-    let pet = service.pet_snapshot().expect("pet snapshot");
-    assert!(pet.memberships.iter().any(|membership| {
-        membership.project_path == codux_runtime_core::path::normalize_local_path(&project_dir)
-            && membership.excluded_at.is_some()
-    }));
-    assert!(pet.memberships.iter().any(|membership| {
-        membership.project_path == codux_runtime_core::path::normalize_local_path(&worktree_dir)
-            && membership.excluded_at.is_some()
-    }));
 
     let _ = fs::remove_dir_all(support_dir);
 }
@@ -268,11 +163,10 @@ fn project_close_cleans_remote_project_state() {
         None,
         "device-1",
     );
-    service.remote_host.resource_subscriptions.next_version(
-        resource,
-        Some("project-1"),
-        None,
-    );
+    service
+        .remote_host
+        .resource_subscriptions
+        .next_version(resource, Some("project-1"), None);
     service
         .remote_host
         .remote_project_scope_by_device
@@ -302,10 +196,11 @@ fn project_close_cleans_remote_project_state() {
             .is_empty()
     );
     assert_eq!(
-        service
-            .remote_host
-            .resource_subscriptions
-            .current_version(resource, Some("project-1"), None),
+        service.remote_host.resource_subscriptions.current_version(
+            resource,
+            Some("project-1"),
+            None
+        ),
         0
     );
     assert!(

@@ -84,7 +84,6 @@ impl CoduxApp {
             return;
         }
         self.start_runtime_ready_initialization(cx);
-        self.sync_desktop_pet_window(false, cx);
         let timer = cx.background_executor().clone();
         cx.spawn(async move |this: gpui::WeakEntity<Self>, cx| {
             let mut ticks = 0_u64;
@@ -144,9 +143,7 @@ impl CoduxApp {
                             app.reconcile_hosted_terminal_bindings(cx);
                             app.detect_project_drive_recovery(cx);
                         }
-                        if result.pet_update_events > 0 {
-                            app.sync_desktop_pet_window(false, cx);
-                        }
+
                         if performance_changed || runtime_queue_busy_changed {
                             app.runtime_queue_busy = runtime_queue_busy;
                             app.invalidate_status_bar(cx);
@@ -342,9 +339,7 @@ impl CoduxApp {
         if result.memory_events > 0 {
             self.invalidate_ui(cx, [UiRegion::WorkspaceAssistant, UiRegion::StatusBar]);
         }
-        if result.pet_events > 0 || result.pet_update_events > 0 {
-            self.invalidate_ui(cx, [UiRegion::WorkspaceChrome, UiRegion::StatusBar]);
-        }
+
         if result.dock_badge_count.is_some() {
             self.invalidate_status_bar(cx);
         }

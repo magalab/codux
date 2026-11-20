@@ -31,7 +31,7 @@ pub struct RuntimeState {
     pub ai_runtime_state: AIRuntimeStateSummary,
     pub remote_ai_current_sessions: Vec<AIHistoryCurrentSessionView>,
     pub remote: RemoteSummary,
-    pub pet: PetSummary,
+
     pub power: PowerSummary,
     pub performance: PerformanceSummary,
     pub tool_permissions: ToolPermissionsSummary,
@@ -135,9 +135,6 @@ pub struct AIRuntimeDrainResult {
 #[derive(Clone, Debug, Default)]
 pub struct AIHistoryDrainResult {
     pub events: Vec<AIHistoryEvent>,
-    pub pet: Option<PetSummary>,
-    pub pet_snapshot: Option<PetSnapshot>,
-    pub pet_error: Option<String>,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]

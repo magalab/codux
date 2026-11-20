@@ -222,33 +222,6 @@ fn normalize_appearance_name(value: &str) -> String {
         .join(" ")
 }
 
-fn sanitize_pet_speech_mode(value: &str) -> String {
-    match value.trim() {
-        "off" => "off",
-        "encourage" => "encourage",
-        "roast" => "roast",
-        "flirty" => "flirty",
-        "chuunibyou" => "chuunibyou",
-        "mixed" => "mixed",
-        _ => "off",
-    }
-    .to_string()
-}
-
-fn sanitize_pet_speech_frequency(value: &str) -> String {
-    match value.trim() {
-        "quiet" => "quiet",
-        "lively" => "lively",
-        "chatterbox" => "chatterbox",
-        _ => "normal",
-    }
-    .to_string()
-}
-
-fn sanitize_pet_reminder_minutes(value: &str) -> String {
-    numeric_string(value, 60, 15, 240).to_string()
-}
-
 fn sanitize_provider_reference(value: &str) -> String {
     let value = value.trim();
     if value.is_empty() {
@@ -273,17 +246,15 @@ fn sanitize_provider_kind(value: &str) -> String {
     .to_string()
 }
 
-fn normalize_hour(value: Option<i32>) -> Option<i32> {
-    value.and_then(|hour| (0..=23).contains(&hour).then_some(hour))
-}
-
 pub fn locale_from_language_setting(language: &str) -> String {
     match language {
         "english" => "en",
-        "simplifiedChinese" | "zh-CN" | "zh_CN" | "zh-Hans" | "zh-Hans-CN"
-        | "zh_Hans_CN" => "zh-Hans",
-        "traditionalChinese" | "zh-TW" | "zh_TW" | "zh-Hant" | "zh-Hant-TW"
-        | "zh_Hant_TW" => "zh-Hant",
+        "simplifiedChinese" | "zh-CN" | "zh_CN" | "zh-Hans" | "zh-Hans-CN" | "zh_Hans_CN" => {
+            "zh-Hans"
+        }
+        "traditionalChinese" | "zh-TW" | "zh_TW" | "zh-Hant" | "zh-Hant-TW" | "zh_Hant_TW" => {
+            "zh-Hant"
+        }
         "japanese" | "ja" => "ja",
         "korean" | "ko" => "ko",
         "french" | "fr" => "fr",

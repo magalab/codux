@@ -1,17 +1,5 @@
 use super::*;
 
-/// In-flight pet level-up celebration overlay; progress runs 0..1.
-#[derive(Clone)]
-pub(in crate::app) struct PetLevelUpFx {
-    pub(in crate::app) level: i64,
-    pub(in crate::app) progress: f32,
-}
-
-#[derive(Clone)]
-pub(in crate::app) struct PetRecalibrationFx {
-    pub(in crate::app) progress: f32,
-}
-
 /// One entry in the file-picker directory listing (local or on a host).
 #[derive(Clone)]
 pub(in crate::app) struct RemoteBrowseEntry {
@@ -126,16 +114,14 @@ pub struct CoduxApp {
     pub(in crate::app) toast_message: Option<String>,
     pub(in crate::app) toast_revision: u64,
     pub(in crate::app) pending_restart_language: Option<String>,
-    pub(in crate::app) desktop_pet_window: Option<AnyWindowHandle>,
+
     pub(in crate::app) settings_window: Option<AnyWindowHandle>,
     pub(in crate::app) about_window: Option<AnyWindowHandle>,
     pub(in crate::app) update_dialog_window: Option<AnyWindowHandle>,
     pub(in crate::app) git_clone_window: Option<AnyWindowHandle>,
     pub(in crate::app) git_credentials_window: Option<AnyWindowHandle>,
     pub(in crate::app) memory_manager_window: Option<AnyWindowHandle>,
-    pub(in crate::app) pet_claim_window: Option<AnyWindowHandle>,
-    pub(in crate::app) pet_custom_install_window: Option<AnyWindowHandle>,
-    pub(in crate::app) pet_dex_window: Option<AnyWindowHandle>,
+
     pub(in crate::app) ssh_profile_editor_window: Option<AnyWindowHandle>,
     pub(in crate::app) db_profile_editor_window: Option<AnyWindowHandle>,
     pub(in crate::app) file_picker_window: Option<AnyWindowHandle>,
@@ -149,37 +135,7 @@ pub struct CoduxApp {
     pub(in crate::app) child_windows: Vec<AnyWindowHandle>,
     pub(in crate::app) parent_main_window: Option<gpui::WeakEntity<CoduxApp>>,
     pub(in crate::app) parent_main_window_handle: Option<AnyWindowHandle>,
-    pub(in crate::app) desktop_pet_line: String,
-    pub(in crate::app) desktop_pet_tone: DesktopPetActivityTone,
-    pub(in crate::app) desktop_pet_plan_items: Vec<DesktopPetPlanItem>,
-    pub(in crate::app) desktop_pet_terminal_statuses:
-        Vec<codux_runtime::ai_runtime::TerminalStatusEvent>,
-    pub(in crate::app) desktop_pet_runtime_activity_active: bool,
-    pub(in crate::app) desktop_pet_main_window_fullscreen: bool,
-    pub(in crate::app) desktop_pet_active_llm_key: String,
-    pub(in crate::app) desktop_pet_requested_llm_key: String,
-    pub(in crate::app) desktop_pet_last_llm_requested_at: f64,
-    // Monotonic dispatch id: only the response from the latest dispatch may
-    // paint, so a slower earlier request can't land out of order. Paired with
-    // an in-flight flag that suppresses overlapping concurrent requests.
-    pub(in crate::app) desktop_pet_llm_generation: u64,
-    pub(in crate::app) desktop_pet_llm_in_flight: bool,
-    pub(in crate::app) desktop_pet_next_hydration_reminder_at: f64,
-    pub(in crate::app) desktop_pet_next_sedentary_reminder_at: f64,
-    pub(in crate::app) desktop_pet_next_late_night_reminder_at: f64,
-    pub(in crate::app) desktop_pet_next_idle_llm_at: f64,
-    pub(in crate::app) desktop_pet_line_visible_until: f64,
-    // While `now` is below this, a same-tone message switch (e.g. several
-    // running agents taking turns as the most-recently-updated session) is held
-    // back so the bubble doesn't flicker between concurrent agents every refresh
-    // tick. Reset each time a new line is actually displayed.
-    pub(in crate::app) desktop_pet_line_hold_until: f64,
-    pub(in crate::app) pet_sprite_frame: usize,
-    pub(in crate::app) pet_sprite_animation_active: bool,
-    pub(in crate::app) pet_level_up: Option<PetLevelUpFx>,
-    pub(in crate::app) pet_level_up_ticking: bool,
-    pub(in crate::app) pet_recalibration: Option<PetRecalibrationFx>,
-    pub(in crate::app) pet_recalibration_ticking: bool,
+
     pub(in crate::app) file_preview: String,
     pub(in crate::app) file_preview_window_path: Option<String>,
     pub(in crate::app) file_preview_window_content: String,
@@ -247,24 +203,13 @@ pub struct CoduxApp {
     pub(in crate::app) git_credential_retrying: bool,
     pub(in crate::app) git_commit_message: String,
     pub(in crate::app) git_commit_message_revision: u64,
-    pub(in crate::app) pet_install_url: String,
-    pub(in crate::app) pet_install_display_name: String,
-    pub(in crate::app) pet_install_preview: Option<PetCustomPetInstallPreview>,
-    pub(in crate::app) pet_install_error: Option<String>,
-    pub(in crate::app) pet_install_previewing: bool,
-    pub(in crate::app) pet_installing: bool,
-    pub(in crate::app) pet_catalog: PetCatalog,
-    pub(in crate::app) pet_snapshot: PetSnapshot,
-    pub(in crate::app) pet_custom_pets: Vec<PetCustomPet>,
-    pub(in crate::app) pet_sprite_paths: HashMap<String, ImageSource>,
+
     pub(in crate::app) project_scroll_handle: UniformListScrollHandle,
     pub(in crate::app) task_scroll_handle: UniformListScrollHandle,
     pub(in crate::app) session_scroll_handle: UniformListScrollHandle,
     pub(in crate::app) ssh_scroll_handle: UniformListScrollHandle,
     pub(in crate::app) git_history_scroll_handle: VirtualListScrollHandle,
-    pub(in crate::app) pet_dex_scroll_handle: VirtualListScrollHandle,
-    pub(in crate::app) pet_custom_install_seen_revision: u64,
-    pub(in crate::app) pet_update_seen_revision: u64,
+
     pub(in crate::app) settings_seen_revision: u64,
     pub(in crate::app) memory_seen_revision: u64,
     pub(in crate::app) child_window_update_seen_revision: u64,
@@ -274,9 +219,7 @@ pub struct CoduxApp {
     pub(in crate::app) child_window_project_seen_revision: u64,
     pub(in crate::app) child_window_worktree_seen_revision: u64,
     pub(in crate::app) child_window_git_seen_revision: u64,
-    pub(in crate::app) pet_claim_species: String,
-    pub(in crate::app) pet_name_editing: bool,
-    pub(in crate::app) pet_dex_spotlight: Option<PetDexSpotlight>,
+
     pub(in crate::app) selected_ai_session_id: Option<String>,
     pub(in crate::app) ai_session_delete_confirm_id: Option<String>,
     pub(in crate::app) selected_ai_provider_id: Option<String>,
@@ -524,8 +467,7 @@ pub(in crate::app) struct RuntimeActivityTickResult {
     pub(in crate::app) project_events: usize,
     pub(in crate::app) file_events: usize,
     pub(in crate::app) ai_history_events: usize,
-    pub(in crate::app) pet_events: usize,
-    pub(in crate::app) pet_update_events: usize,
+
     pub(in crate::app) ai_activity_changed: bool,
     pub(in crate::app) memory_events: usize,
     pub(in crate::app) dock_badge_count: Option<i64>,
@@ -738,34 +680,9 @@ pub(in crate::app) fn git_status_tree_key(section_id: &str, path: &str) -> Strin
     format!("{section_id}:{}", path.trim_matches('/'))
 }
 
-pub(in crate::app) const PET_DEX_FRAME_INTERVAL: Duration = Duration::from_millis(280);
-pub(in crate::app) const PET_CUSTOM_INSTALL_WINDOW_WIDTH: f32 = 680.0;
-pub(in crate::app) const PET_CUSTOM_INSTALL_INPUT_HEIGHT: f32 = 230.0;
-pub(in crate::app) const PET_CUSTOM_INSTALL_READY_HEIGHT: f32 = 530.0;
-pub(in crate::app) const PET_CUSTOM_INSTALL_ERROR_HEIGHT: f32 = 280.0;
 pub(in crate::app) const GIT_CREDENTIALS_WINDOW_WIDTH: f32 = 440.0;
 pub(in crate::app) const GIT_CREDENTIALS_COMPACT_HEIGHT: f32 = 310.0;
 pub(in crate::app) const GIT_CREDENTIALS_EXPANDED_HEIGHT: f32 = 350.0;
-
-pub(in crate::app) fn resize_pet_custom_install_window(window: &mut Window, height: f32) {
-    window.resize(size(
-        px(PET_CUSTOM_INSTALL_WINDOW_WIDTH),
-        px(height.clamp(
-            PET_CUSTOM_INSTALL_INPUT_HEIGHT,
-            PET_CUSTOM_INSTALL_READY_HEIGHT,
-        )),
-    ));
-}
-
-pub(in crate::app) fn resize_pet_custom_install_window_handle(
-    handle: AnyWindowHandle,
-    height: f32,
-    cx: &mut Context<CoduxApp>,
-) {
-    let _ = handle.update(cx, |_view, window, _cx| {
-        resize_pet_custom_install_window(window, height);
-    });
-}
 
 pub(in crate::app) fn resize_git_credentials_window(window: &mut Window, expanded: bool) {
     let height = if expanded {

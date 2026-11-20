@@ -15,7 +15,6 @@ include!("service.rs");
 include!("service_preferences.rs");
 include!("service_ai_provider.rs");
 include!("service_memory.rs");
-include!("service_pet.rs");
 include!("service_runtime_tools.rs");
 include!("service_shortcuts.rs");
 include!("sanitize.rs");

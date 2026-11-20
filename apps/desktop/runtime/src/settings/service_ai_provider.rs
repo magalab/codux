@@ -67,24 +67,13 @@ impl SettingsService {
                 .and_then(Value::as_str)
                 .map(|id| id == provider_id)
                 .unwrap_or(false)
-            {
-                memory.insert(
-                    "defaultExtractorProviderId".to_string(),
-                    Value::String("automatic".to_string()),
-                );
-            }
-        if let Some(pet) = ai.get_mut("pet").and_then(Value::as_object_mut)
-            && pet
-                .get("speechProviderId")
-                .and_then(Value::as_str)
-                .map(|id| id == provider_id)
-                .unwrap_or(false)
-            {
-                pet.insert(
-                    "speechProviderId".to_string(),
-                    Value::String("automatic".to_string()),
-                );
-            }
+        {
+            memory.insert(
+                "defaultExtractorProviderId".to_string(),
+                Value::String("automatic".to_string()),
+            );
+        }
+
         self.save_raw_settings(&raw)?;
         Ok(summary_from_raw(&raw))
     }

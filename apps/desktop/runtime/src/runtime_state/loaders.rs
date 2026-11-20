@@ -14,21 +14,21 @@ fn load_projects(support_dir: &Path) -> (Vec<ProjectInfo>, Option<ProjectInfo>) 
         .map(|project| {
             let runtime_target = project.resolved_runtime_target();
             ProjectInfo {
-            exists: runtime_target.is_hosted() || Path::new(&project.path).exists(),
-            id: project.id,
-            badge: project
-                .badge_text
-                .clone()
-                .filter(|value| !value.trim().is_empty())
-                .unwrap_or_else(|| crate::project_store::badge_from_name(&project.name)),
-            badge_symbol: project.badge_symbol,
-            badge_color_hex: project.badge_color_hex,
-            name: project.name,
-            path: project.path,
-            git_default_push_remote_name: project.git_default_push_remote_name,
-            environment_variables: project.environment_variables,
-            runtime_target,
-        }
+                exists: runtime_target.is_hosted() || Path::new(&project.path).exists(),
+                id: project.id,
+                badge: project
+                    .badge_text
+                    .clone()
+                    .filter(|value| !value.trim().is_empty())
+                    .unwrap_or_else(|| crate::project_store::badge_from_name(&project.name)),
+                badge_symbol: project.badge_symbol,
+                badge_color_hex: project.badge_color_hex,
+                name: project.name,
+                path: project.path,
+                git_default_push_remote_name: project.git_default_push_remote_name,
+                environment_variables: project.environment_variables,
+                runtime_target,
+            }
         })
         .collect::<Vec<_>>();
 
@@ -165,11 +165,7 @@ fn load_ssh(support_dir: &Path, runtime_assets: PathBuf) -> SSHSummary {
     SSHService::new(support_dir.to_path_buf(), runtime_assets).summary()
 }
 
-fn load_db(
-    support_dir: &Path,
-    runtime_assets: PathBuf,
-    project_id: Option<&str>,
-) -> DBSummary {
+fn load_db(support_dir: &Path, runtime_assets: PathBuf, project_id: Option<&str>) -> DBSummary {
     DBService::new(
         support_dir.to_path_buf(),
         runtime_assets,
@@ -225,10 +221,6 @@ fn load_ai_runtime_state(
 
 fn load_remote(support_dir: &Path) -> RemoteSummary {
     RemoteService::new(support_dir.to_path_buf()).summary()
-}
-
-fn load_pet(support_dir: &Path) -> PetSummary {
-    PetService::new(support_dir.to_path_buf()).summary()
 }
 
 fn load_performance() -> PerformanceSummary {
